@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [ubuntu-18.04, windows-latest, macos-latest]
 
     steps:
     - uses: actions/checkout@v2
@@ -24,6 +24,7 @@ jobs:
       with:
         # Only build on CPython
         CIBW_BUILD: "cp36-* cp37-* cp38-* cp39-*"
+        CIBW_ENVIRONMENT_LINUX: "CFLAGS='-fPIC'"
 
     - uses: actions/setup-python@v1
       name: Install Python
