@@ -14,7 +14,7 @@ with open(os.path.join(BASE_DIR, "README.md"), "r") as readme:
 class DeflateBuilder(build_ext):
     def run(self, *args, **kwargs):
         libdeflate_dir = os.path.join(BASE_DIR, "libdeflate")
-        result = subprocess.run(["make"], cwd=libdeflate_dir)
+        result = subprocess.run(["make"], cwd=libdeflate_dir, env={ "CFLAGS": "-fPIC" })
         if result.returncode == 0:
             super().run(*args, **kwargs)
         else:
