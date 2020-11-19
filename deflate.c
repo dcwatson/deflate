@@ -17,6 +17,7 @@ static PyObject *deflate_gzip_compress(PyObject *self, PyObject *args, PyObject 
 
     if (compression_level < 1 || compression_level > 12)
     {
+        PyBuffer_Release(&data);
         PyErr_SetString(PyExc_ValueError, "compresslevel must be between 1 and 12.");
         return NULL;
     }
@@ -27,6 +28,7 @@ static PyObject *deflate_gzip_compress(PyObject *self, PyObject *args, PyObject 
     if (compressed_data == NULL)
     {
         libdeflate_free_compressor(compressor);
+        PyBuffer_Release(&data);
         return PyErr_NoMemory();
     }
     size_t compressed_size = libdeflate_gzip_compress(compressor, data.buf, data.len, compressed_data, bound);
@@ -35,12 +37,14 @@ static PyObject *deflate_gzip_compress(PyObject *self, PyObject *args, PyObject 
     if (compressed_size == 0)
     {
         PyMem_RawFree(compressed_data);
+        PyBuffer_Release(&data);
         PyErr_SetString(DeflateError, "Compression failed.");
         return NULL;
     }
 
     PyObject *bytes = PyBytes_FromStringAndSize(compressed_data, compressed_size);
     PyMem_RawFree(compressed_data);
+    PyBuffer_Release(&data);
 
     return bytes;
 }
@@ -57,6 +61,7 @@ static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args)
     if (data.len < 6)
     {
         PyErr_SetString(DeflateError, "Invalid gzip data.");
+        PyBuffer_Release(&data);
         return NULL;
     }
 
@@ -65,6 +70,7 @@ static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args)
     if (bytes[0] != 0x1F || bytes[1] != 0x8B)
     {
         PyErr_SetString(DeflateError, "Invalid gzip data.");
+        PyBuffer_Release(&data);
         return NULL;
     }
 
@@ -89,9 +95,11 @@ static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args)
     case LIBDEFLATE_SUCCESS:
         output = PyBytes_FromStringAndSize(decompressed_data, decompressed_size);
         PyMem_RawFree(decompressed_data);
+        PyBuffer_Release(&data);
         break;
     default:
         PyMem_RawFree(decompressed_data);
+        PyBuffer_Release(&data);
         PyErr_SetString(DeflateError, "Decompression failed.");
     }
 
