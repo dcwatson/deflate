@@ -47,6 +47,7 @@ class DeflateBuilder(build_ext):
             # Even though we build libdeflate as static, we might be built as shared, so make sure libdeflate is PIC.
             result = subprocess.run(["make", "clean", "libdeflate.a"], cwd=libdeflate_dir, env=env(cflags="-fPIC"))
         if result.returncode == 0:
+            print(os.listdir(libdeflate_dir))
             super().run(*args, **kwargs)
             """"
             if is_apple_silicon and not APPLE_UNIVERSAL:
@@ -60,7 +61,7 @@ class DeflateBuilder(build_ext):
 
 
 deflate = Extension(
-    "deflate", sources=["deflate.c"], extra_objects=["libdeflate/libdeflate.a"]
+    "deflate", sources=["deflate.c"], libraries=["deflate"], library_dirs=["libdeflate"]
 )
 
 setup(
