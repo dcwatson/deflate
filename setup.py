@@ -2,13 +2,16 @@ import os
 import platform
 import subprocess
 import sysconfig
-
 from distutils.command.build_ext import build_ext
+
 from setuptools import Extension, setup
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 APPLE_UNIVERSAL = os.getenv("APPLE_UNIVERSAL", "0") == "1"
+STATIC_LIB = (
+    "libdeflatestatic.lib" if platform.system() == "Windows" else "libdeflate.a"
+)
 
 with open(os.path.join(BASE_DIR, "README.md"), "r") as readme:
     long_description = readme.read()
@@ -26,7 +29,9 @@ class DeflateBuilder(build_ext):
         build_dir = os.path.join(BASE_DIR, "build")
         libdeflate_dir = os.path.join(BASE_DIR, "libdeflate")
         # Check to see if we're building on Apple Silicon.
-        is_apple_silicon = platform.system() == "Darwin" and platform.machine() == "arm64"
+        is_apple_silicon = (
+            platform.system() == "Darwin" and platform.machine() == "arm64"
+        )
         # Building a universal library (at least right now) means building libdeflate twice and joining them.
         if is_apple_silicon and APPLE_UNIVERSAL:
             lipo_libs = []
@@ -37,17 +42,27 @@ class DeflateBuilder(build_ext):
                 lib_name = os.path.join(build_dir, "libdeflate.{}.a".format(arch))
                 cflags = "-fPIC -arch {} -mmacosx-version-min={}".format(arch, target)
                 # -B tells make to always rebuild, so we don't need to clean between builds.
-                subprocess.run(["make", "clean", "libdeflate.a"], cwd=libdeflate_dir, env=env(cflags=cflags))
-                subprocess.run(["mv", "-f", "libdeflate.a", lib_name], cwd=libdeflate_dir)
+                subprocess.run(
+                    ["make", "clean", STATIC_LIB],
+                    cwd=libdeflate_dir,
+                    env=env(cflags=cflags),
+                )
+                subprocess.run(["mv", "-f", STATIC_LIB, lib_name], cwd=libdeflate_dir)
                 lipo_libs.append(lib_name)
             # Join all the architectures into a single universal library.
-            result = subprocess.run(["lipo", "-create", *lipo_libs, "-output", "libdeflate.a"], cwd=libdeflate_dir)
+            result = subprocess.run(
+                ["lipo", "-create", *lipo_libs, "-output", STATIC_LIB],
+                cwd=libdeflate_dir,
+            )
         else:
             # Only need to build the static library we're going to link, no need for programs.
             # Even though we build libdeflate as static, we might be built as shared, so make sure libdeflate is PIC.
-            result = subprocess.run(["make", "clean", "libdeflate.a"], cwd=libdeflate_dir, env=env(cflags="-fPIC"))
+            result = subprocess.run(
+                ["make", "clean", STATIC_LIB],
+                cwd=libdeflate_dir,
+                env=env(cflags="-fPIC"),
+            )
         if result.returncode == 0:
-            print(os.listdir(libdeflate_dir))
             super().run(*args, **kwargs)
             """"
             if is_apple_silicon and not APPLE_UNIVERSAL:
@@ -61,7 +76,9 @@ class DeflateBuilder(build_ext):
 
 
 deflate = Extension(
-    "deflate", sources=["deflate.c"], libraries=["deflate"], library_dirs=["libdeflate"]
+    "deflate",
+    sources=["deflate.c"],
+    extra_objects=["libdeflate/{}".format(STATIC_LIB)],
 )
 
 setup(
