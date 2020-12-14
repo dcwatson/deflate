@@ -1,3 +1,10 @@
+## 0.3.0
+
+* Compile libdeflate directly instead of trying to build/link it
+* Actual working Windows binary wheels
+* Change the default compression level to 6 to match zlib
+
+
 ## 0.2.0
 
 * Compile libdeflate with `-fPIC` (#5)

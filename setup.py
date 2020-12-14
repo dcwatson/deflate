@@ -1,4 +1,5 @@
 import os
+import platform
 
 from setuptools import Extension, setup
 
@@ -8,7 +9,7 @@ LIBDEFLATE_DIR = os.path.join(BASE_DIR, "libdeflate")
 with open(os.path.join(BASE_DIR, "README.md"), "r") as readme:
     long_description = readme.read()
 
-
+cpu = "arm" if platform.machine().startswith("arm") else "x86"
 deflate = Extension(
     "deflate",
     sources=[
@@ -21,7 +22,7 @@ deflate = Extension(
         "libdeflate/lib/utils.c",
         "libdeflate/lib/zlib_compress.c",
         "libdeflate/lib/zlib_decompress.c",
-        "libdeflate/lib/x86/cpu_features.c",
+        "libdeflate/lib/{}/cpu_features.c".format(cpu),
         "deflate.c",
     ],
     include_dirs=[LIBDEFLATE_DIR],
@@ -29,7 +30,7 @@ deflate = Extension(
 
 setup(
     name="deflate",
-    version="0.2.0",
+    version="0.3.0",
     description="Python wrapper for libdeflate.",
     long_description=long_description,
     long_description_content_type="text/markdown",

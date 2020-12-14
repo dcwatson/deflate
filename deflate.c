@@ -8,7 +8,7 @@ static PyObject *deflate_gzip_compress(PyObject *self, PyObject *args, PyObject 
 {
     static char *keywords[] = {"data", "compresslevel", NULL};
     Py_buffer data;
-    int compression_level = 9;
+    int compression_level = 6;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|i", keywords, &data, &compression_level))
     {

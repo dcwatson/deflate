@@ -7,7 +7,7 @@ gzip data, with a very basic API:
 
 ```python
 import deflate
-level = 9  # The default; may be 1-12 for libdeflate.
+level = 6  # The default; may be 1-12 for libdeflate.
 compressed = deflate.gzip_compress(b"hello world!" * 1000, level)
 original = deflate.gzip_decompress(compressed)
 ```
