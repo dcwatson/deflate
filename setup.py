@@ -8,10 +8,12 @@ from setuptools import Extension, setup
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+APPLE_SILICON = platform.system() == "Darwin" and platform.machine() == "arm64"
 APPLE_UNIVERSAL = os.getenv("APPLE_UNIVERSAL", "0") == "1"
-STATIC_LIB = (
-    "libdeflatestatic.lib" if platform.system() == "Windows" else "libdeflate.a"
-)
+WINDOWS = platform.system() == "Windows"
+
+STATIC_LIB = "libdeflatestatic.lib" if WINDOWS else "libdeflate.a"
+
 
 with open(os.path.join(BASE_DIR, "README.md"), "r") as readme:
     long_description = readme.read()
@@ -28,12 +30,8 @@ class DeflateBuilder(build_ext):
     def run(self, *args, **kwargs):
         build_dir = os.path.join(BASE_DIR, "build")
         libdeflate_dir = os.path.join(BASE_DIR, "libdeflate")
-        # Check to see if we're building on Apple Silicon.
-        is_apple_silicon = (
-            platform.system() == "Darwin" and platform.machine() == "arm64"
-        )
         # Building a universal library (at least right now) means building libdeflate twice and joining them.
-        if is_apple_silicon and APPLE_UNIVERSAL:
+        if APPLE_SILICON and APPLE_UNIVERSAL:
             lipo_libs = []
             # Make sure we target the same version of macOS Python did, so the linker doesn't complain.
             target = sysconfig.get_config_var("MACOSX_DEPLOYMENT_TARGET")
@@ -53,6 +51,12 @@ class DeflateBuilder(build_ext):
             result = subprocess.run(
                 ["lipo", "-create", *lipo_libs, "-output", STATIC_LIB],
                 cwd=libdeflate_dir,
+            )
+        elif WINDOWS:
+            result = subprocess.run(
+                ["nmake", "/f", "Makefile.msc", "clean", STATIC_LIB],
+                cwd=libdeflate_dir,
+                shell=True,
             )
         else:
             # Only need to build the static library we're going to link, no need for programs.

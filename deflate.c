@@ -75,7 +75,7 @@ static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args)
     }
 
     // The last 4 bytes of a gzip archive are the original data size, in little endian.
-    bytes = (uint8_t *)(data.buf + (data.len - 4));
+    bytes = (uint8_t *)data.buf + (data.len - 4);
     uint32_t size = (bytes[0] << 0) | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
     // TODO: upper bound on decompression size?
 
