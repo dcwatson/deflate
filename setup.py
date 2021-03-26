@@ -1,5 +1,6 @@
 import os
 import platform
+import re
 
 from setuptools import Extension, setup
 
@@ -8,6 +9,9 @@ LIBDEFLATE_DIR = os.path.join(BASE_DIR, "libdeflate")
 
 with open(os.path.join(BASE_DIR, "README.md"), "r") as readme:
     long_description = readme.read()
+
+with open(os.path.join(BASE_DIR, "deflate.c"), "r") as src:
+    version = re.match(r'.*#define MODULE_VERSION "(.*?)"', src.read(), re.S).group(1)
 
 cpu = "arm" if platform.machine().startswith("arm") else "x86"
 deflate = Extension(
@@ -30,7 +34,7 @@ deflate = Extension(
 
 setup(
     name="deflate",
-    version="0.3.0",
+    version=version,
     description="Python wrapper for libdeflate.",
     long_description=long_description,
     long_description_content_type="text/markdown",
