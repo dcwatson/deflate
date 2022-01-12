@@ -3,7 +3,7 @@
 
 #include "libdeflate/libdeflate.h"
 
-#define MODULE_VERSION "0.4.0"
+#define MODULE_VERSION "0.5.0"
 
 static PyObject *DeflateError;
 
@@ -79,27 +79,25 @@ static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args) {
         (bytes[0] << 0) | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
     // TODO: upper bound on decompression size?
 
-    size_t decompressed_size;
-    void *decompressed_data = PyMem_RawMalloc(size);
-    if (decompressed_data == NULL)
+    PyObject *output = PyBytes_FromStringAndSize(NULL, size);
+    if (output == NULL)
         return PyErr_NoMemory();
+
+    size_t decompressed_size;
     struct libdeflate_decompressor *decompressor = libdeflate_alloc_decompressor();
-    enum libdeflate_result result = libdeflate_gzip_decompress(
-        decompressor, data.buf, data.len, decompressed_data, size, &decompressed_size);
+    enum libdeflate_result result =
+        libdeflate_gzip_decompress(decompressor, data.buf, data.len,
+                                   PyBytes_AsString(output), size, &decompressed_size);
     libdeflate_free_decompressor(decompressor);
 
-    PyObject *output = NULL;
+    // Resize the bytes object to the decompressed size and release the input buffer.
+    _PyBytes_Resize(&output, decompressed_size);
+    PyBuffer_Release(&data);
 
-    switch (result) {
-    case LIBDEFLATE_SUCCESS:
-        output = PyBytes_FromStringAndSize(decompressed_data, decompressed_size);
-        PyMem_RawFree(decompressed_data);
-        PyBuffer_Release(&data);
-        break;
-    default:
-        PyMem_RawFree(decompressed_data);
-        PyBuffer_Release(&data);
+    if (result != LIBDEFLATE_SUCCESS) {
+        Py_DECREF(output);
         PyErr_SetString(DeflateError, "Decompression failed.");
+        return NULL;
     }
 
     return output;

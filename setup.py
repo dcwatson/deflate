@@ -30,6 +30,7 @@ deflate = Extension(
         "deflate.c",
     ],
     include_dirs=[LIBDEFLATE_DIR],
+    extra_compile_args=["-w"],
 )
 
 setup(
