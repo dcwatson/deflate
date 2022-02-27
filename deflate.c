@@ -105,11 +105,27 @@ static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args) {
     return output;
 }
 
+static PyObject *deflate_crc32(PyObject *self, PyObject *args) {
+    Py_buffer data;
+    unsigned int crc = 0;
+
+    if (!PyArg_ParseTuple(args, "y*|I", &data, &crc)) {
+        return NULL;
+    }
+
+    crc = libdeflate_crc32(crc, data.buf, data.len);
+    PyBuffer_Release(&data);
+
+    return Py_BuildValue("I", crc);
+}
+
 static PyMethodDef deflate_methods[] = {
     {"gzip_compress", (PyCFunction)deflate_gzip_compress, METH_VARARGS | METH_KEYWORDS,
      "Compress data using gzip."},
     {"gzip_decompress", (PyCFunction)deflate_gzip_decompress, METH_VARARGS,
      "Decompress gzip data."},
+    {"crc32", (PyCFunction)deflate_crc32, METH_VARARGS,
+     "CRC32 algorithm from libdeflate"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef deflate_module = {PyModuleDef_HEAD_INIT, "deflate",
