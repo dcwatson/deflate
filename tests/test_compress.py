@@ -6,7 +6,7 @@ import os
 import deflate
 
 
-@pytest.mark.parametrize("data",[
+@pytest.mark.parametrize("data", [
     b'',
     b'\0',
     b'\0' * 23,
@@ -15,7 +15,7 @@ import deflate
     os.urandom(50),
 ])
 def test_roundtrip(data):
-    """test whether decompressing compressed data correctly yields the original data"""
+    """test whether decompressing compressed data yields the original data"""
     assert deflate.gzip_decompress(deflate.gzip_compress(data)) == data
 
 
@@ -32,12 +32,12 @@ def test_shorter(compresslevel):
 
 @pytest.mark.parametrize("compresslevel", [-1, 0, 13, 256, 65536])
 def test_unsupported_compresslevel(compresslevel):
-    """test whether compresslevels outside of the supported range raise ValueError"""
+    """test if compresslevels outside of supported range raise ValueError"""
     with pytest.raises(ValueError):
         deflate.gzip_compress(b'foobar', compresslevel)
 
 
-@pytest.mark.parametrize("compressed",[
+@pytest.mark.parametrize("compressed", [
     b'',
     b'\0',
     b'\0' * 23,
