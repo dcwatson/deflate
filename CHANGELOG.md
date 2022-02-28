@@ -1,3 +1,8 @@
+## 0.4.0
+
+* Eliminate unnecessary allocation/copy in compression and decompression (#10)
+
+
 ## 0.3.0
 
 * Compile libdeflate directly instead of trying to build/link it
