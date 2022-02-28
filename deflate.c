@@ -143,6 +143,7 @@ PyMODINIT_FUNC PyInit_deflate(void) {
 
     DeflateError = PyErr_NewException("deflate.DeflateError", NULL, NULL);
     Py_INCREF(DeflateError);
+    PyModule_AddObject(module, "DeflateError", DeflateError);
 
     return module;
 }

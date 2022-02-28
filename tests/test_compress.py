@@ -1,0 +1,50 @@
+# test compress / decompress functionality
+
+import pytest
+
+import os
+import deflate
+
+
+@pytest.mark.parametrize("data",[
+    b'',
+    b'\0',
+    b'\0' * 23,
+    b'foobar',
+    b'foobar' * 42,
+    os.urandom(50),
+])
+def test_roundtrip(data):
+    """test whether decompressing compressed data correctly yields the original data"""
+    assert deflate.gzip_decompress(deflate.gzip_compress(data)) == data
+
+
+@pytest.mark.parametrize("compresslevel", range(1, 12 + 1))
+def test_shorter(compresslevel):
+    """tests whether compressed data is actually shorter than original data and
+       also uses all supported compresslevels"""
+    data = b'foobar' * 123
+    len_original = len(data)
+    len_compressed = len(deflate.gzip_compress(data, compresslevel))
+    print(compresslevel, len_original, len_compressed)
+    assert len_compressed < len_original
+
+
+@pytest.mark.parametrize("compresslevel", [-1, 0, 13, 256, 65536])
+def test_unsupported_compresslevel(compresslevel):
+    """test whether compresslevels outside of the supported range raise ValueError"""
+    with pytest.raises(ValueError):
+        deflate.gzip_compress(b'foobar', compresslevel)
+
+
+@pytest.mark.parametrize("compressed",[
+    b'',
+    b'\0',
+    b'\0' * 23,
+    b'foobar',
+    b'foobar' * 42,
+])
+def test_invalid_decompression(compressed):
+    """test whether giving invalid data to decompress raises DeflateError"""
+    with pytest.raises(deflate.DeflateError):
+        deflate.gzip_decompress(compressed)
