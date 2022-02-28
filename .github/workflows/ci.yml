@@ -77,4 +77,4 @@ jobs:
         pip install -e .
     - name: run pytest
       run: |
-        pytest -v
+        pytest -v --benchmark-columns=mean,stddev,median,ops
