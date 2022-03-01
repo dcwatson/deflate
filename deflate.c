@@ -1,7 +1,6 @@
 #define PY_SSIZE_T_CLEAN
+#include "libdeflate.h"
 #include <Python.h>
-
-#include "libdeflate/libdeflate.h"
 
 #define MODULE_VERSION "0.4.0"
 
