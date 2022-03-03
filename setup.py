@@ -13,24 +13,64 @@ with open(os.path.join(BASE_DIR, "README.md"), "r") as readme:
 with open(os.path.join(BASE_DIR, "deflate.c"), "r") as src:
     version = re.match(r'.*#define MODULE_VERSION "(.*?)"', src.read(), re.S).group(1)
 
-cpu = "arm" if platform.machine().startswith("arm") else "x86"
+
+def truish(s, default=False):
+    if s is None or s == '':
+        return default
+    if s.lower() in ('0', 'false', 'no', 'n'):
+        return False
+    if s.lower() in ('1', 'true', 'yes', 'y'):
+        return True
+    return default
+
+
+prefer_system_libdeflate = not truish(os.environ.get("USE_BUNDLED_DEFLATE"))
+system_prefix_libdeflate = os.environ.get("LIBDEFLATE_PREFIX")
+
+try:
+    import pkgconfig as pc
+except ImportError:
+    if prefer_system_libdeflate and not system_prefix_libdeflate:
+        print("Warning: can not import pkgconfig python package.")
+    pc = None
+
+deflate_sources = [
+    "deflate.c",
+]
+
+if prefer_system_libdeflate and system_prefix_libdeflate:
+    print("Detected and preferring libdeflate [via LIBDEFLATE_PREFIX]")
+    extension_kwargs = dict(
+        include_dirs=[os.path.join(system_prefix_libdeflate, "include")],
+        library_dirs=[os.path.join(system_prefix_libdeflate, "lib")],
+        libraries=["deflate"])
+elif prefer_system_libdeflate and pc and pc.installed("libdeflate", ">= 1.10"):
+    print("Detected and preferring libdeflate [via pkgconfig]")
+    extension_kwargs = pc.parse("libdeflate")
+else:
+    print("Using bundled libdeflate")
+    cpu = "arm" if platform.machine().startswith("arm") else "x86"
+    deflate_sources.extend(
+        [
+            "libdeflate/lib/adler32.c",
+            "libdeflate/lib/crc32.c",
+            "libdeflate/lib/deflate_compress.c",
+            "libdeflate/lib/deflate_decompress.c",
+            "libdeflate/lib/gzip_compress.c",
+            "libdeflate/lib/gzip_decompress.c",
+            "libdeflate/lib/utils.c",
+            "libdeflate/lib/zlib_compress.c",
+            "libdeflate/lib/zlib_decompress.c",
+            "libdeflate/lib/{}/cpu_features.c".format(cpu),
+        ]
+    )
+    extension_kwargs = dict(include_dirs=[LIBDEFLATE_DIR],
+                            extra_compile_args=["-w"])
+
 deflate = Extension(
     "deflate",
-    sources=[
-        "libdeflate/lib/adler32.c",
-        "libdeflate/lib/crc32.c",
-        "libdeflate/lib/deflate_compress.c",
-        "libdeflate/lib/deflate_decompress.c",
-        "libdeflate/lib/gzip_compress.c",
-        "libdeflate/lib/gzip_decompress.c",
-        "libdeflate/lib/utils.c",
-        "libdeflate/lib/zlib_compress.c",
-        "libdeflate/lib/zlib_decompress.c",
-        "libdeflate/lib/{}/cpu_features.c".format(cpu),
-        "deflate.c",
-    ],
-    include_dirs=[LIBDEFLATE_DIR],
-    extra_compile_args=["-w"],
+    deflate_sources,
+    **extension_kwargs
 )
 
 setup(
