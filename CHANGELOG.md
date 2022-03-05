@@ -1,6 +1,12 @@
 ## 0.4.0
 
 * Eliminate unnecessary allocation/copy in compression and decompression (#10)
+* add DeflateError object to module, fixes related ImportError (#14)
+* add deflate.crc32 api, docs, tests (#11)
+* update bundled code to libdeflate v1.10 (#22)
+* setup.py: add pypi metadata, require python >= 3.6
+* benchmark deflate.crc32 against zlib.crc32 using pytest-benchmark
+* add tests (using pytest), flake8 linter, CI via github actions (#16, #13)
 
 
 ## 0.3.0
