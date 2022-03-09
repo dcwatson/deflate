@@ -10,6 +10,7 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-20.04, windows-2019, macOS-10.15]
@@ -29,6 +30,7 @@ jobs:
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v2
         with:
