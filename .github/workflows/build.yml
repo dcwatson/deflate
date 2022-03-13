@@ -22,6 +22,11 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.3.1
+        env:
+          CIBW_TEST_REQUIRES: pytest pytest-benchmark
+          CIBW_TEST_COMMAND: "pytest {project}/tests"
+          # Disable building PyPy wheels on all platforms
+          CIBW_SKIP: pp*
 
       - uses: actions/upload-artifact@v2
         with:
