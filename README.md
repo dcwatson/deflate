@@ -8,6 +8,7 @@ Currently, it only handles:
 
 compression and decompression of gzip data, with a very basic API
 -----------------------------------------------------------------
+
 ```python
 import deflate
 level = 6  # The default; may be 1-12 for libdeflate.
@@ -17,20 +18,26 @@ original = deflate.gzip_decompress(compressed)
 
 crc32 computation
 -----------------
+
 ```python
 import deflate
 crc32 = deflate.crc32(b"hello world! ")  # initial
 crc32 = deflate.crc32(b"hello universe!", crc32)  # continued
 ```
 
-deflate package installation
-============================
+Installation
+============
 
-deflate will:
-- use libdeflate from LIBDEFLATE_PREFIX when given
-- use pkgconfig pypi package (if available) to locate a libdeflate
-- fall back to bundled libdeflate code otherwise or when enforced via 
-  USE_BUNDLED_DEFLATE=yes. 
+Installing `deflate` will either link to or compile `libdeflate`, depending on the
+following:
+
+1. If a `LIBDEFLATE_PREFIX` environment variable is set, it will always be used to look
+   for a system-installed `libdeflate`.
+2. If the `pkgconfig` package is installed, it will be used to automatically find (and
+   link to) a system-installed `libdeflate` if available.
+3. Falls back to compiling the bundled libdeflate code. This behavior can be triggered
+   manually by setting `USE_BUNDLED_DEFLATE=1`.
+
 
 ```
 export USE_BUNDLED_DEFLATE=no  # default is no
