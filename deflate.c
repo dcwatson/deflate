@@ -118,6 +118,20 @@ static PyObject *deflate_crc32(PyObject *self, PyObject *args) {
     return Py_BuildValue("I", crc);
 }
 
+static PyObject *deflate_adler32(PyObject *self, PyObject *args) {
+    Py_buffer data;
+    unsigned int adler = 1;
+
+    if (!PyArg_ParseTuple(args, "y*|I", &data, &adler)) {
+        return NULL;
+    }
+
+    adler = libdeflate_adler32(adler, data.buf, data.len);
+    PyBuffer_Release(&data);
+
+    return Py_BuildValue("I", adler);
+}
+
 static PyMethodDef deflate_methods[] = {
     {"gzip_compress", (PyCFunction)deflate_gzip_compress, METH_VARARGS | METH_KEYWORDS,
      "Compress data using gzip."},
@@ -125,6 +139,8 @@ static PyMethodDef deflate_methods[] = {
      "Decompress gzip data."},
     {"crc32", (PyCFunction)deflate_crc32, METH_VARARGS,
      "CRC32 algorithm from libdeflate"},
+    {"adler32", (PyCFunction)deflate_adler32, METH_VARARGS,
+     "adler32 algorithm from libdeflate"},
     {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef deflate_module = {PyModuleDef_HEAD_INIT, "deflate",
