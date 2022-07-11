@@ -1,4 +1,4 @@
-# test crc32 function
+# test adler32 function
 
 import os
 import zlib
@@ -20,8 +20,8 @@ import deflate
     ],
 )
 def test_adler_simple(data):
-    """test whether crc32 function computes correctly (reference: zlib.crc32)"""
-    assert deflate.crc32(data) == zlib.crc32(data)
+    """test whether adler32 function computes correctly (reference: zlib.adler32)"""
+    assert deflate.adler32(data) == zlib.adler32(data)
 
 
 @pytest.mark.parametrize(
@@ -46,7 +46,7 @@ def test_adler32_with_start_value(data):
     assert deflate.adler32(data, deflate.adler32(data, 0)) == zlib.adler32(
         data, zlib.adler32(data, 0)
     )
-    # continued crc32 computation yields same result as in one go
+    # continued adler32 computation yields same result as in one go
     assert deflate.adler32(data, deflate.adler32(data, 0)) == deflate.adler32(
         data * 2, 0
     )
