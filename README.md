@@ -25,6 +25,16 @@ crc32 = deflate.crc32(b"hello world! ")  # initial
 crc32 = deflate.crc32(b"hello universe!", crc32)  # continued
 ```
 
+
+adler32 computation
+-----------------
+
+```python
+import deflate
+adler32 = deflate.adler32(b"hello world! ")  # initial
+adler32 = deflate.adler32(b"hello universe!", adler32)  # continued
+```
+
 Installation
 ============
 
