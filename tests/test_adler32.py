@@ -38,10 +38,10 @@ def test_adler_simple(data):
 def test_adler32_with_start_value(data):
     """test whether adler32 function computes correctly,
     with start value (reference: zlib.adler32)"""
-    # 0 is the default start value
-    assert deflate.adler32(data, 1) == deflate.adler32(data, 1)
-    # 0 start value behaviour as in zlib
-    assert deflate.adler32(data, 0) == zlib.adler32(data, 0)
+    # 1 is the default start value
+    assert deflate.adler32(data,1) == deflate.adler32(data)
+    # 1 start value behaviour as in zlib
+    assert deflate.adler32(data, 1) == zlib.adler32(data, 1)
     # "random" start value behaviour as in zlib
     assert deflate.adler32(data, deflate.adler32(data, 0)) == zlib.adler32(
         data, zlib.adler32(data, 0)
