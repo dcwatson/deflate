@@ -23,8 +23,9 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.13.1
         env:
-          # Disable building PyPy wheels on all platforms
+          # Disable building PyPy wheels, build arm64 wheels for macOS.
           CIBW_SKIP: pp*
+          CIBW_ARCHS_MACOS: x86_64 arm64
 
       - uses: actions/upload-artifact@v3
         with:
