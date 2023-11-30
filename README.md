@@ -16,6 +16,19 @@ compressed = deflate.gzip_compress(b"hello world!" * 1000, level)
 original = deflate.gzip_decompress(compressed)
 ```
 
+compression and decompression of raw DEFLATE data
+-------------------------------------------------
+
+The size of the decompressed file needs to be kept through additional logic. Ditto for checksums.
+
+```python
+import deflate
+level = 6  # The default; may be 1-12 for libdeflate.
+data = b"hello world!" * 1000
+compressed = deflate.deflate_compress(data, level)
+original = deflate.deflate_decompress(compressed, len(data))
+```
+
 crc32 computation
 -----------------
 
@@ -54,4 +67,14 @@ export USE_BUNDLED_DEFLATE=no  # default is no
 export LIBDEFLATE_PREFIX=/path/to/lib/deflate  # default: no path given
 pip install pkgconfig  # optional, you also need pkg-config cli tool
 pip install deflate
+```
+
+
+Testing
+=======
+
+```
+pip install pytest
+pip install pytest-benchmark
+pytest
 ```
