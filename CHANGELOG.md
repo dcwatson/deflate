@@ -1,6 +1,8 @@
 ## 0.5.0
 
-* Added raw DEFLATE functionality from libdeflate
+* Added raw DEFLATE functionality from libdeflate (#39)
+* Added zlib functionality from libdeflate (#2)
+* Updated bundled libdeflate to v1.19
 
 
 ## 0.4.0

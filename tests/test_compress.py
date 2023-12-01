@@ -1,6 +1,8 @@
 # test compress / decompress functionality
 
+import gzip
 import os
+import zlib
 
 import pytest
 
@@ -21,6 +23,13 @@ import deflate
 def test_roundtrip(data):
     """test whether decompressing compressed data yields the original data"""
     assert deflate.gzip_decompress(deflate.gzip_compress(data)) == data
+    assert deflate.gzip_decompress(gzip.compress(data)) == data
+    assert gzip.decompress(deflate.gzip_compress(data)) == data
+
+    assert deflate.zlib_decompress(deflate.zlib_compress(data), len(data)) == data
+    assert deflate.zlib_decompress(zlib.compress(data), len(data)) == data
+    assert zlib.decompress(deflate.zlib_compress(data)) == data
+
     assert deflate.deflate_decompress(deflate.deflate_compress(data), len(data)) == data
 
 
