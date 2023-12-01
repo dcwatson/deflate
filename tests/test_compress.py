@@ -21,6 +21,7 @@ import deflate
 def test_roundtrip(data):
     """test whether decompressing compressed data yields the original data"""
     assert deflate.gzip_decompress(deflate.gzip_compress(data)) == data
+    assert deflate.deflate_decompress(deflate.deflate_compress(data), len(data)) == data
 
 
 @pytest.mark.parametrize("compresslevel", range(1, 12 + 1))

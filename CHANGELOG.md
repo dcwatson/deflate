@@ -1,3 +1,8 @@
+## 0.5.0
+
+* Added raw DEFLATE functionality from libdeflate
+
+
 ## 0.4.0
 
 * Eliminate unnecessary allocation/copy in compression and decompression (#10)
