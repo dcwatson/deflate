@@ -1,13 +1,11 @@
-deflate API
-===========
+# deflate API
 
 This is a very thin Python wrapper Eric Biggers' excellent
 [libdeflate](https://github.com/ebiggers/libdeflate).
 
 Currently, it only handles:
 
-compression and decompression of gzip data, with a very basic API
------------------------------------------------------------------
+## Compression and decompression of gzip data, with a very basic API
 
 ```python
 import deflate
@@ -16,8 +14,7 @@ compressed = deflate.gzip_compress(b"hello world!" * 1000, level)
 original = deflate.gzip_decompress(compressed)
 ```
 
-compression and decompression of raw DEFLATE data
--------------------------------------------------
+## Compression and decompression of raw DEFLATE or zlib data
 
 The size of the decompressed file needs to be kept through additional logic. Ditto for checksums.
 
@@ -25,12 +22,15 @@ The size of the decompressed file needs to be kept through additional logic. Dit
 import deflate
 level = 6  # The default; may be 1-12 for libdeflate.
 data = b"hello world!" * 1000
+# DEFLATE
 compressed = deflate.deflate_compress(data, level)
 original = deflate.deflate_decompress(compressed, len(data))
+# zlib
+compressed = deflate.zlib_compress(data, level)
+original = deflate.zlib_decompress(compressed, len(data))
 ```
 
-crc32 computation
------------------
+## CRC32 computation
 
 ```python
 import deflate
@@ -39,8 +39,7 @@ crc32 = deflate.crc32(b"hello universe!", crc32)  # continued
 ```
 
 
-adler32 computation
------------------
+## Adler-32 computation
 
 ```python
 import deflate
@@ -48,8 +47,7 @@ adler32 = deflate.adler32(b"hello world! ")  # initial
 adler32 = deflate.adler32(b"hello universe!", adler32)  # continued
 ```
 
-Installation
-============
+# Installation
 
 Installing `deflate` will either link to or compile `libdeflate`, depending on the
 following:
@@ -70,8 +68,7 @@ pip install deflate
 ```
 
 
-Testing
-=======
+# Testing
 
 ```
 pip install pytest

@@ -3,6 +3,7 @@
 * Added raw DEFLATE functionality from libdeflate (#39)
 * Added zlib functionality from libdeflate (#2)
 * Updated bundled libdeflate to v1.19
+* Test on and build wheels for Python 3.12 (#40)
 
 
 ## 0.4.0
