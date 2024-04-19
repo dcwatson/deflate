@@ -50,10 +50,12 @@ static PyObject *deflate_gzip_compress(PyObject *self, PyObject *args,
     return bytes;
 }
 
-static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args) {
+static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args,
+                                         PyObject *kwargs) {
+    static char *keywords[] = {"data", NULL};
     Py_buffer data;
 
-    if (!PyArg_ParseTuple(args, "y*", &data)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*", keywords, &data)) {
         return NULL;
     }
 
@@ -310,16 +312,16 @@ static PyObject *deflate_zlib_decompress(PyObject *self, PyObject *args,
 static PyMethodDef deflate_methods[] = {
     {"gzip_compress", (PyCFunction)deflate_gzip_compress, METH_VARARGS | METH_KEYWORDS,
      "Compress data using gzip."},
-    {"gzip_decompress", (PyCFunction)deflate_gzip_decompress, METH_VARARGS,
-     "Decompress gzip data."},
+    {"gzip_decompress", (PyCFunction)deflate_gzip_decompress,
+     METH_VARARGS | METH_KEYWORDS, "Decompress gzip data."},
     {"deflate_compress", (PyCFunction)deflate_deflate_compress,
      METH_VARARGS | METH_KEYWORDS, "Compress data using raw DEFLATE."},
-    {"deflate_decompress", (PyCFunction)deflate_deflate_decompress, METH_VARARGS,
-     "Decompress raw DEFLATE data."},
+    {"deflate_decompress", (PyCFunction)deflate_deflate_decompress,
+     METH_VARARGS | METH_KEYWORDS, "Decompress raw DEFLATE data."},
     {"zlib_compress", (PyCFunction)deflate_zlib_compress, METH_VARARGS | METH_KEYWORDS,
      "Compress data using zlib."},
-    {"zlib_decompress", (PyCFunction)deflate_zlib_decompress, METH_VARARGS,
-     "Decompress zlib data."},
+    {"zlib_decompress", (PyCFunction)deflate_zlib_decompress,
+     METH_VARARGS | METH_KEYWORDS, "Decompress zlib data."},
     {"crc32", (PyCFunction)deflate_crc32, METH_VARARGS,
      "CRC32 algorithm from libdeflate"},
     {"adler32", (PyCFunction)deflate_adler32, METH_VARARGS,
