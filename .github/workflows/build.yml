@@ -21,7 +21,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.2
+        uses: pypa/cibuildwheel@v2.17.0
         env:
           # Disable building PyPy wheels, build arm64 wheels for macOS.
           CIBW_SKIP: pp*
