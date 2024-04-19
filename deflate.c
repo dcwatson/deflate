@@ -2,7 +2,7 @@
 #include "libdeflate.h"
 #include <Python.h>
 
-#define MODULE_VERSION "0.5.0"
+#define MODULE_VERSION "0.6.0"
 
 static PyObject *DeflateError;
 
@@ -176,11 +176,13 @@ static PyObject *deflate_deflate_compress(PyObject *self, PyObject *args,
     return bytes;
 }
 
-static PyObject *deflate_deflate_decompress(PyObject *self, PyObject *args) {
+static PyObject *deflate_deflate_decompress(PyObject *self, PyObject *args,
+                                            PyObject *kwargs) {
+    static char *keywords[] = {"data", "originalsize", NULL};
     Py_buffer data;
     unsigned int size = 0;
 
-    if (!PyArg_ParseTuple(args, "y*|I", &data, &size)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*I", keywords, &data, &size)) {
         return NULL;
     }
 
@@ -254,11 +256,13 @@ static PyObject *deflate_zlib_compress(PyObject *self, PyObject *args,
     return bytes;
 }
 
-static PyObject *deflate_zlib_decompress(PyObject *self, PyObject *args) {
+static PyObject *deflate_zlib_decompress(PyObject *self, PyObject *args,
+                                         PyObject *kwargs) {
+    static char *keywords[] = {"data", "originalsize", NULL};
     Py_buffer data;
     unsigned int size = 0;
 
-    if (!PyArg_ParseTuple(args, "y*|I", &data, &size)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*I", keywords, &data, &size)) {
         return NULL;
     }
 

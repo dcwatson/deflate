@@ -1,3 +1,9 @@
+## 0.6.0
+
+* Require `originalsize` argument for `deflate_decompress` and `zlib_decompress`
+* Updated bundled libdeflate to v1.20
+
+
 ## 0.5.0
 
 * Added raw DEFLATE functionality from libdeflate (#39)
