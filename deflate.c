@@ -40,7 +40,7 @@ static PyObject *deflate_gzip_compress(PyObject *self, PyObject *args,
     PyBuffer_Release(&data);
 
     if (compressed_size == 0) {
-        Py_DECREF(bytes);
+        Py_XDECREF(bytes);
         PyErr_SetString(DeflateError, "Compression failed.");
         return NULL;
     }
@@ -84,6 +84,11 @@ static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args) {
         return PyErr_NoMemory();
     }
 
+    if (Py_REFCNT(output) != 1) {
+        // Immortal object (b"" for instance)
+        return output;
+    }
+
     size_t decompressed_size;
     struct libdeflate_decompressor *decompressor = libdeflate_alloc_decompressor();
     enum libdeflate_result result =
@@ -96,7 +101,7 @@ static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args) {
     PyBuffer_Release(&data);
 
     if (result != LIBDEFLATE_SUCCESS) {
-        Py_DECREF(output);
+        Py_XDECREF(output);
         PyErr_SetString(DeflateError, "Decompression failed.");
         return NULL;
     }
@@ -166,7 +171,7 @@ static PyObject *deflate_deflate_compress(PyObject *self, PyObject *args,
     PyBuffer_Release(&data);
 
     if (compressed_size == 0) {
-        Py_DECREF(bytes);
+        Py_XDECREF(bytes);
         PyErr_SetString(DeflateError, "Compression failed.");
         return NULL;
     }
@@ -192,6 +197,11 @@ static PyObject *deflate_deflate_decompress(PyObject *self, PyObject *args,
         return PyErr_NoMemory();
     }
 
+    if (Py_REFCNT(output) != 1) {
+        // Immortal object (b"" for instance)
+        return output;
+    }
+
     size_t decompressed_size;
     struct libdeflate_decompressor *decompressor = libdeflate_alloc_decompressor();
     enum libdeflate_result result = libdeflate_deflate_decompress(
@@ -204,7 +214,7 @@ static PyObject *deflate_deflate_decompress(PyObject *self, PyObject *args,
     PyBuffer_Release(&data);
 
     if (result != LIBDEFLATE_SUCCESS) {
-        Py_DECREF(output);
+        Py_XDECREF(output);
         PyErr_SetString(DeflateError, "Decompression failed.");
         return NULL;
     }
@@ -246,7 +256,7 @@ static PyObject *deflate_zlib_compress(PyObject *self, PyObject *args,
     PyBuffer_Release(&data);
 
     if (compressed_size == 0) {
-        Py_DECREF(bytes);
+        Py_XDECREF(bytes);
         PyErr_SetString(DeflateError, "Compression failed.");
         return NULL;
     }
@@ -272,6 +282,11 @@ static PyObject *deflate_zlib_decompress(PyObject *self, PyObject *args,
         return PyErr_NoMemory();
     }
 
+    if (Py_REFCNT(output) != 1) {
+        // Immortal object (b"" for instance)
+        return output;
+    }
+
     size_t decompressed_size;
     struct libdeflate_decompressor *decompressor = libdeflate_alloc_decompressor();
     enum libdeflate_result result =
@@ -284,7 +299,7 @@ static PyObject *deflate_zlib_decompress(PyObject *self, PyObject *args,
     PyBuffer_Release(&data);
 
     if (result != LIBDEFLATE_SUCCESS) {
-        Py_DECREF(output);
+        Py_XDECREF(output);
         PyErr_SetString(DeflateError, "Decompression failed.");
         return NULL;
     }
