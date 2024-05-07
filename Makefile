@@ -9,5 +9,5 @@ format:
 	isort tests
 
 test: clean
-	pip install -e .
+	pip install -e .[test]
 	pytest
