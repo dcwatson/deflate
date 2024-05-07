@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
 
     steps:
       - uses: actions/checkout@v3
@@ -23,9 +23,8 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.17.0
         env:
-          # Disable building PyPy wheels, build arm64 wheels for macOS.
+          # Disable building PyPy wheels.
           CIBW_SKIP: pp*
-          CIBW_ARCHS_MACOS: x86_64 arm64
 
       - uses: actions/upload-artifact@v3
         with:
