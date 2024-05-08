@@ -8,3 +8,4 @@ __pycache__
 /pip-wheel-metadata
 .vscode
 .venv
+.nova

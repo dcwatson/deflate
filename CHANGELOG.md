@@ -2,9 +2,19 @@
 
 * Switched to [scikit-build-core](https://github.com/scikit-build/scikit-build-core) and
   CMake (#42, #43) - huge thanks to @henryiii
+* Use the [stable Python ABI](https://docs.python.org/3/c-api/stable.html)
+* Return [memoryview](https://docs.python.org/3/library/stdtypes.html#memoryview) from
+  compression methods, to avoid copying (slow) or resizing bytes objects (not stable
+  ABI)
+* Decompression methods will error if provided with an incorrect `originalsize`
 
 
-## 0.6.0
+## 0.6.1
+
+* Fixed broken wheels on macOS arm64 platforms
+
+
+## 0.6.0 (yanked)
 
 * Require `originalsize` argument for `deflate_decompress` and `zlib_decompress`
 * Updated bundled libdeflate to v1.20
