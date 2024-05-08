@@ -1,3 +1,9 @@
+## 0.7.0 (in development)
+
+* Switched to [scikit-build-core](https://github.com/scikit-build/scikit-build-core) and
+  CMake (#42, #43) - huge thanks to @henryiii
+
+
 ## 0.6.0
 
 * Require `originalsize` argument for `deflate_decompress` and `zlib_decompress`
