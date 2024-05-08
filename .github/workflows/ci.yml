@@ -19,14 +19,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.x"
-      - name: Install Checkers
-        run: pip install flake8 black isort
-      - name: flake8
-        run: flake8 tests
-      - name: black
-        run: black --check tests
-      - name: isort
-        run: isort --check tests
+      - name: Install Ruff
+        run: pip install ruff
+      - name: Checks
+        run: ruff check
+      - name: Format
+        run: ruff format
 
   test:
     needs: checks

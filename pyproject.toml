@@ -45,3 +45,13 @@ minimum-version = "0.9"
 provider = "scikit_build_core.metadata.regex"
 input = "deflate.c"
 regex = '.*#define MODULE_VERSION "(?P<value>.*)"'
+
+[tool.ruff]
+extend-exclude = [
+  "libdeflate",
+]
+lint.extend-select = [
+  "B",        # flake8-bugbear
+  "I",        # isort
+]
+lint.isort.known-first-party = ["deflate"]

@@ -5,8 +5,8 @@ clean:
 
 format:
 	clang-format -i deflate.c
-	black tests
-	isort tests
+	ruff check
+	ruff format
 
 test: clean
 	pip install -e .[test]
