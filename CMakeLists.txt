@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18...3.29)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
-find_package(Python REQUIRED COMPONENTS Development.Module)
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
 python_add_library(deflate_ext MODULE deflate.c)
 set_property(TARGET deflate_ext PROPERTY OUTPUT_NAME deflate)
