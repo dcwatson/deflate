@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.18...3.29)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(LIBDEFLATE_BUILD_SHARED_LIB OFF)
 add_subdirectory(libdeflate EXCLUDE_FROM_ALL)
 
