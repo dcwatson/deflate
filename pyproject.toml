@@ -38,6 +38,7 @@ managed = true
 dev-dependencies = [
     "pytest>=7",
     "pytest-benchmark",
+    "pre-commit>=3.7.0",
 ]
 
 [tool.scikit-build]

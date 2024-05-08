@@ -8,14 +8,33 @@
 #   with-sources: false
 
 -e file:.
+cfgv==3.4.0
+    # via pre-commit
+distlib==0.3.8
+    # via virtualenv
+filelock==3.14.0
+    # via virtualenv
+identify==2.5.36
+    # via pre-commit
 iniconfig==2.0.0
     # via pytest
+nodeenv==1.8.0
+    # via pre-commit
 packaging==24.0
     # via pytest
+platformdirs==4.2.1
+    # via virtualenv
 pluggy==1.5.0
     # via pytest
+pre-commit==3.7.0
 py-cpuinfo==9.0.0
     # via pytest-benchmark
 pytest==8.2.0
     # via pytest-benchmark
 pytest-benchmark==4.0.0
+pyyaml==6.0.1
+    # via pre-commit
+setuptools==69.5.1
+    # via nodeenv
+virtualenv==20.26.1
+    # via pre-commit
