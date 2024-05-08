@@ -34,7 +34,7 @@ Homepage = "https://github.com/dcwatson/deflate"
 
 [project.optional-dependencies]
 test = [
-  "pytest >=7",
+  "pytest>=7",
   "pytest-benchmark",
 ]
 
