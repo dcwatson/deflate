@@ -7,3 +7,4 @@ __pycache__
 /build
 /pip-wheel-metadata
 .vscode
+.venv
