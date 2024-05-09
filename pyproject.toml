@@ -33,6 +33,9 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/dcwatson/deflate"
 
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
 [tool.rye]
 managed = true
 dev-dependencies = [
@@ -55,3 +58,8 @@ extend-exclude = ["libdeflate"]
 [tool.ruff.lint]
 extend-select = ["B", "I"]
 isort.known-first-party = ["deflate"]
+
+[tool.cibuildwheel]
+skip = ["pp*"]  # PyPy not supported
+test-extras = ["test"]
+test-command = "pytest {package}/tests"
