@@ -5,7 +5,7 @@
 
 #include "libdeflate.h"
 
-#define MODULE_VERSION "0.7.0"
+#define MODULE_VERSION "0.8.0"
 
 static PyObject *DeflateError;
 

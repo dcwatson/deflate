@@ -4,9 +4,9 @@ project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT})
 
 if(Python_VERSION VERSION_GREATER_EQUAL 3.11)
-  python_add_library(deflate_ext MODULE USE_SABI 3.11 src/deflate.c)
+    python_add_library(deflate_ext MODULE USE_SABI 3.11 src/deflate.c)
 else()
-  python_add_library(deflate_ext MODULE WITH_SOABI src/deflate.c)
+    python_add_library(deflate_ext MODULE WITH_SOABI src/deflate.c)
 endif()
 set_property(TARGET deflate_ext PROPERTY OUTPUT_NAME deflate)
 
