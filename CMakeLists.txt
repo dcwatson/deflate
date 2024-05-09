@@ -1,13 +1,14 @@
-cmake_minimum_required(VERSION 3.18...3.29)
+cmake_minimum_required(VERSION 3.26...3.29)
 project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT})
 
-python_add_library(deflate_ext MODULE src/deflate.c)
-set_property(TARGET deflate_ext PROPERTY OUTPUT_NAME deflate)
 if(Python_VERSION VERSION_GREATER_EQUAL 3.11)
-  target_compile_definitions(deflate_ext PRIVATE Py_LIMITED_API=0x030b00f0)
+  python_add_library(deflate_ext MODULE USE_SABI 3.11 src/deflate.c)
+else()
+  python_add_library(deflate_ext MODULE src/deflate.c)
 endif()
+set_property(TARGET deflate_ext PROPERTY OUTPUT_NAME deflate)
 
 if(DEFINED ENV{LIBDEFLATE_PREFIX})
     message(STATUS "Finding libdeflate in $ENV{LIBDEFLATE_PREFIX}")
