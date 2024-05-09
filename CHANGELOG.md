@@ -2,11 +2,6 @@
 
 * Switched to [scikit-build-core](https://github.com/scikit-build/scikit-build-core) and
   CMake (#42, #43) - huge thanks to @henryiii
-* Use only [stable Python API](https://docs.python.org/3/c-api/stable.html)
-    * _Note that this can't actually be enabled until Python 3.11 is the minimum
-      supported version._
-* Return [bytearray](https://docs.python.org/3/library/stdtypes.html#bytearray) from
-  compression and decompression methods, to avoid copying (resizing bytes is not stable)
 * Raise `ValueError` instead of `DeflateError` on invalid gzip data
 
 

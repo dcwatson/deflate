@@ -1,6 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 
 // Can't use this until 3.11, when Py_buffer was stabilized
+// Also _PyBytes_Resize is not public API (although it seems like it should be)
 // #define Py_LIMITED_API 0x030b00f0
 #include <Python.h>
 
@@ -28,14 +29,14 @@ static PyObject *compress(Py_buffer *data, int compression_level,
         libdeflate_alloc_compressor(compression_level);
     size_t bound = (*boundfunc)(compressor, data->len);
 
-    PyObject *bytes = PyByteArray_FromStringAndSize(NULL, bound);
+    PyObject *bytes = PyBytes_FromStringAndSize(NULL, bound);
     if (bytes == NULL) {
         libdeflate_free_compressor(compressor);
         return PyErr_NoMemory();
     }
 
     size_t compressed_size = (*compressfunc)(compressor, data->buf, data->len,
-                                             PyByteArray_AsString(bytes), bound);
+                                             PyBytes_AsString(bytes), bound);
     libdeflate_free_compressor(compressor);
 
     if (compressed_size == 0) {
@@ -45,7 +46,7 @@ static PyObject *compress(Py_buffer *data, int compression_level,
     }
 
     if (compressed_size != bound) {
-        PyByteArray_Resize(bytes, compressed_size);
+        _PyBytes_Resize(&bytes, compressed_size);
     }
 
     return bytes;
@@ -55,19 +56,19 @@ static PyObject *decompress(Py_buffer *data, unsigned int originalsize,
                             DecompressFunc decompressfunc) {
     // Nothing in, nothing out.
     if (originalsize == 0) {
-        return PyByteArray_FromStringAndSize(NULL, 0);
+        return PyBytes_FromStringAndSize(NULL, 0);
     }
 
-    PyObject *output = PyByteArray_FromStringAndSize(NULL, originalsize);
+    PyObject *output = PyBytes_FromStringAndSize(NULL, originalsize);
     if (output == NULL) {
         return PyErr_NoMemory();
     }
 
     size_t decompressed_size;
     struct libdeflate_decompressor *decompressor = libdeflate_alloc_decompressor();
-    enum libdeflate_result result = (*decompressfunc)(
-        decompressor, data->buf, data->len, PyByteArray_AsString(output), originalsize,
-        &decompressed_size);
+    enum libdeflate_result result =
+        (*decompressfunc)(decompressor, data->buf, data->len, PyBytes_AsString(output),
+                          originalsize, &decompressed_size);
     libdeflate_free_decompressor(decompressor);
 
     if (result != LIBDEFLATE_SUCCESS) {
@@ -77,7 +78,7 @@ static PyObject *decompress(Py_buffer *data, unsigned int originalsize,
     }
 
     if (decompressed_size != originalsize) {
-        PyByteArray_Resize(output, decompressed_size);
+        _PyBytes_Resize(&output, decompressed_size);
     }
 
     return output;
