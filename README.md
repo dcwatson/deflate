@@ -61,6 +61,6 @@ LIBDEFLATE_PREFIX=/opt/homebrew/Cellar/libdeflate/1.20 python -m build
 # Testing
 
 ```
-pip install pytest pytest-benchmark
-pytest
+pip install -r requirements-dev.lock
+python -m pytest
 ```

@@ -1,10 +1,103 @@
 #define PY_SSIZE_T_CLEAN
-#include "libdeflate.h"
+
+// Can't use this until 3.11, when Py_buffer was stabilized
+// #define Py_LIMITED_API 0x030b00f0
 #include <Python.h>
+
+#include "libdeflate.h"
 
 #define MODULE_VERSION "0.7.0"
 
 static PyObject *DeflateError;
+
+typedef size_t (*CompressFunc)(struct libdeflate_compressor *, const void *, size_t,
+                               void *, size_t);
+typedef enum libdeflate_result (*DecompressFunc)(struct libdeflate_decompressor *,
+                                                 const void *, size_t, void *, size_t,
+                                                 size_t *);
+typedef size_t (*BoundFunc)(struct libdeflate_compressor *, size_t);
+
+static PyObject *compress(Py_buffer *data, int compression_level,
+                          CompressFunc compressfunc, BoundFunc boundfunc) {
+    if (compression_level < 1 || compression_level > 12) {
+        PyErr_SetString(PyExc_ValueError, "compresslevel must be between 1 and 12");
+        return NULL;
+    }
+
+    struct libdeflate_compressor *compressor =
+        libdeflate_alloc_compressor(compression_level);
+    size_t bound = (*boundfunc)(compressor, data->len);
+
+    PyObject *bytes = PyByteArray_FromStringAndSize(NULL, bound);
+    if (bytes == NULL) {
+        libdeflate_free_compressor(compressor);
+        return PyErr_NoMemory();
+    }
+
+    size_t compressed_size = (*compressfunc)(compressor, data->buf, data->len,
+                                             PyByteArray_AsString(bytes), bound);
+    libdeflate_free_compressor(compressor);
+
+    if (compressed_size == 0) {
+        Py_DecRef(bytes);
+        PyErr_SetString(DeflateError, "Compression failed");
+        return NULL;
+    }
+
+    if (compressed_size != bound) {
+        PyByteArray_Resize(bytes, compressed_size);
+    }
+
+    return bytes;
+}
+
+static PyObject *decompress(Py_buffer *data, unsigned int originalsize,
+                            DecompressFunc decompressfunc) {
+    // Nothing in, nothing out.
+    if (originalsize == 0) {
+        return PyByteArray_FromStringAndSize(NULL, 0);
+    }
+
+    PyObject *output = PyByteArray_FromStringAndSize(NULL, originalsize);
+    if (output == NULL) {
+        return PyErr_NoMemory();
+    }
+
+    size_t decompressed_size;
+    struct libdeflate_decompressor *decompressor = libdeflate_alloc_decompressor();
+    enum libdeflate_result result = (*decompressfunc)(
+        decompressor, data->buf, data->len, PyByteArray_AsString(output), originalsize,
+        &decompressed_size);
+    libdeflate_free_decompressor(decompressor);
+
+    if (result != LIBDEFLATE_SUCCESS) {
+        Py_DecRef(output);
+        PyErr_SetString(DeflateError, "Decompression failed");
+        return NULL;
+    }
+
+    if (decompressed_size != originalsize) {
+        PyByteArray_Resize(output, decompressed_size);
+    }
+
+    return output;
+}
+
+/* GZIP */
+
+static int read_gzip_size(Py_buffer *data, unsigned int *outsize) {
+    uint8_t *bytes = (uint8_t *)data->buf;
+    if ((data->len < 6) || (bytes[0] != 0x1F || bytes[1] != 0x8B)) {
+        return -1;
+    }
+
+    // The last 4 bytes of a gzip archive are the original data size, in little endian.
+    bytes += (data->len - 4);
+    (*outsize) = ((uint32_t)bytes[0] << 0) | ((uint32_t)bytes[1] << 8) |
+                 ((uint32_t)bytes[2] << 16) | ((uint32_t)bytes[3] << 24);
+
+    return 0;
+}
 
 static PyObject *deflate_gzip_compress(PyObject *self, PyObject *args,
                                        PyObject *kwargs) {
@@ -17,99 +110,107 @@ static PyObject *deflate_gzip_compress(PyObject *self, PyObject *args,
         return NULL;
     }
 
-    if (compression_level < 1 || compression_level > 12) {
-        PyBuffer_Release(&data);
-        PyErr_SetString(PyExc_ValueError, "compresslevel must be between 1 and 12.");
-        return NULL;
-    }
-
-    struct libdeflate_compressor *compressor =
-        libdeflate_alloc_compressor(compression_level);
-    size_t bound = libdeflate_gzip_compress_bound(compressor, data.len);
-
-    PyObject *bytes = PyBytes_FromStringAndSize(NULL, bound);
-    if (bytes == NULL) {
-        libdeflate_free_compressor(compressor);
-        PyBuffer_Release(&data);
-        return PyErr_NoMemory();
-    }
-
-    size_t compressed_size = libdeflate_gzip_compress(compressor, data.buf, data.len,
-                                                      PyBytes_AsString(bytes), bound);
-    libdeflate_free_compressor(compressor);
+    PyObject *obj = compress(&data, compression_level, libdeflate_gzip_compress,
+                             libdeflate_gzip_compress_bound);
     PyBuffer_Release(&data);
-
-    if (compressed_size == 0) {
-        Py_XDECREF(bytes);
-        PyErr_SetString(DeflateError, "Compression failed.");
-        return NULL;
-    }
-
-    _PyBytes_Resize(&bytes, compressed_size);
-
-    return bytes;
+    return obj;
 }
 
 static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args,
                                          PyObject *kwargs) {
-    static char *keywords[] = {"data", NULL};
+    static char *keywords[] = {"data", "originalsize", NULL};
     Py_buffer data;
+    unsigned int originalsize = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*", keywords, &data)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|I", keywords, &data,
+                                     &originalsize)) {
         return NULL;
     }
 
-    if (data.len < 6) {
-        PyErr_SetString(DeflateError, "Invalid gzip data.");
-        PyBuffer_Release(&data);
-        return NULL;
+    if (originalsize == 0) {
+        if (read_gzip_size(&data, &originalsize) != 0) {
+            PyBuffer_Release(&data);
+            PyErr_SetString(PyExc_ValueError, "Invalid gzip data");
+            return NULL;
+        }
     }
 
-    // Very basic gzip header check before we go allocating memory.
-    uint8_t *bytes = (uint8_t *)data.buf;
-    if (bytes[0] != 0x1F || bytes[1] != 0x8B) {
-        PyErr_SetString(DeflateError, "Invalid gzip data.");
-        PyBuffer_Release(&data);
-        return NULL;
-    }
-
-    // The last 4 bytes of a gzip archive are the original data size, in little
-    // endian.
-    bytes = (uint8_t *)data.buf + (data.len - 4);
-    uint32_t size =
-        (bytes[0] << 0) | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
-    // TODO: upper bound on decompression size?
-
-    PyObject *output = PyBytes_FromStringAndSize(NULL, size);
-    if (output == NULL) {
-        PyBuffer_Release(&data);
-        return PyErr_NoMemory();
-    }
-
-    if (Py_REFCNT(output) != 1) {
-        // Immortal object (b"" for instance)
-        return output;
-    }
-
-    size_t decompressed_size;
-    struct libdeflate_decompressor *decompressor = libdeflate_alloc_decompressor();
-    enum libdeflate_result result =
-        libdeflate_gzip_decompress(decompressor, data.buf, data.len,
-                                   PyBytes_AsString(output), size, &decompressed_size);
-    libdeflate_free_decompressor(decompressor);
-
-    // Resize the bytes object to the decompressed size and release the input buffer.
-    _PyBytes_Resize(&output, decompressed_size);
+    PyObject *obj = decompress(&data, originalsize, libdeflate_gzip_decompress);
     PyBuffer_Release(&data);
+    return obj;
+}
 
-    if (result != LIBDEFLATE_SUCCESS) {
-        Py_XDECREF(output);
-        PyErr_SetString(DeflateError, "Decompression failed.");
+/* DEFLATE */
+
+static PyObject *deflate_deflate_compress(PyObject *self, PyObject *args,
+                                          PyObject *kwargs) {
+    static char *keywords[] = {"data", "compresslevel", NULL};
+    Py_buffer data;
+    int compression_level = 6;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|i", keywords, &data,
+                                     &compression_level)) {
         return NULL;
     }
 
-    return output;
+    PyObject *obj = compress(&data, compression_level, libdeflate_deflate_compress,
+                             libdeflate_deflate_compress_bound);
+    PyBuffer_Release(&data);
+    return obj;
 }
+
+static PyObject *deflate_deflate_decompress(PyObject *self, PyObject *args,
+                                            PyObject *kwargs) {
+    static char *keywords[] = {"data", "originalsize", NULL};
+    Py_buffer data;
+    unsigned int originalsize = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*I", keywords, &data,
+                                     &originalsize)) {
+        return NULL;
+    }
+
+    PyObject *obj = decompress(&data, originalsize, libdeflate_deflate_decompress);
+    PyBuffer_Release(&data);
+    return obj;
+}
+
+/* ZLIB */
+
+static PyObject *deflate_zlib_compress(PyObject *self, PyObject *args,
+                                       PyObject *kwargs) {
+    static char *keywords[] = {"data", "compresslevel", NULL};
+    Py_buffer data;
+    int compression_level = 6;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|i", keywords, &data,
+                                     &compression_level)) {
+        return NULL;
+    }
+
+    PyObject *obj = compress(&data, compression_level, libdeflate_zlib_compress,
+                             libdeflate_zlib_compress_bound);
+    PyBuffer_Release(&data);
+    return obj;
+}
+
+static PyObject *deflate_zlib_decompress(PyObject *self, PyObject *args,
+                                         PyObject *kwargs) {
+    static char *keywords[] = {"data", "originalsize", NULL};
+    Py_buffer data;
+    unsigned int originalsize = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*I", keywords, &data,
+                                     &originalsize)) {
+        return NULL;
+    }
+
+    PyObject *obj = decompress(&data, originalsize, libdeflate_zlib_decompress);
+    PyBuffer_Release(&data);
+    return obj;
+}
+
+/* CRC-32/Adler-32 */
 
 static PyObject *deflate_crc32(PyObject *self, PyObject *args) {
     Py_buffer data;
@@ -137,176 +238,6 @@ static PyObject *deflate_adler32(PyObject *self, PyObject *args) {
     PyBuffer_Release(&data);
 
     return Py_BuildValue("I", adler);
-}
-
-static PyObject *deflate_deflate_compress(PyObject *self, PyObject *args,
-                                          PyObject *kwargs) {
-    static char *keywords[] = {"data", "compresslevel", NULL};
-    Py_buffer data;
-    int compression_level = 6;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|i", keywords, &data,
-                                     &compression_level)) {
-        return NULL;
-    }
-
-    if (compression_level < 1 || compression_level > 12) {
-        PyBuffer_Release(&data);
-        PyErr_SetString(PyExc_ValueError, "compresslevel must be between 1 and 12.");
-        return NULL;
-    }
-
-    struct libdeflate_compressor *compressor =
-        libdeflate_alloc_compressor(compression_level);
-    size_t bound = libdeflate_deflate_compress_bound(compressor, data.len);
-
-    PyObject *bytes = PyBytes_FromStringAndSize(NULL, bound);
-    if (bytes == NULL) {
-        libdeflate_free_compressor(compressor);
-        PyBuffer_Release(&data);
-        return PyErr_NoMemory();
-    }
-
-    size_t compressed_size = libdeflate_deflate_compress(
-        compressor, data.buf, data.len, PyBytes_AsString(bytes), bound);
-    libdeflate_free_compressor(compressor);
-    PyBuffer_Release(&data);
-
-    if (compressed_size == 0) {
-        Py_XDECREF(bytes);
-        PyErr_SetString(DeflateError, "Compression failed.");
-        return NULL;
-    }
-
-    _PyBytes_Resize(&bytes, compressed_size);
-
-    return bytes;
-}
-
-static PyObject *deflate_deflate_decompress(PyObject *self, PyObject *args,
-                                            PyObject *kwargs) {
-    static char *keywords[] = {"data", "originalsize", NULL};
-    Py_buffer data;
-    unsigned int size = 0;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*I", keywords, &data, &size)) {
-        return NULL;
-    }
-
-    PyObject *output = PyBytes_FromStringAndSize(NULL, size);
-    if (output == NULL) {
-        PyBuffer_Release(&data);
-        return PyErr_NoMemory();
-    }
-
-    if (Py_REFCNT(output) != 1) {
-        // Immortal object (b"" for instance)
-        return output;
-    }
-
-    size_t decompressed_size;
-    struct libdeflate_decompressor *decompressor = libdeflate_alloc_decompressor();
-    enum libdeflate_result result = libdeflate_deflate_decompress(
-        decompressor, data.buf, data.len, PyBytes_AsString(output), size,
-        &decompressed_size);
-    libdeflate_free_decompressor(decompressor);
-
-    // Resize the bytes object to the decompressed size and release the input buffer.
-    _PyBytes_Resize(&output, decompressed_size);
-    PyBuffer_Release(&data);
-
-    if (result != LIBDEFLATE_SUCCESS) {
-        Py_XDECREF(output);
-        PyErr_SetString(DeflateError, "Decompression failed.");
-        return NULL;
-    }
-
-    return output;
-}
-
-static PyObject *deflate_zlib_compress(PyObject *self, PyObject *args,
-                                       PyObject *kwargs) {
-    static char *keywords[] = {"data", "compresslevel", NULL};
-    Py_buffer data;
-    int compression_level = 6;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|i", keywords, &data,
-                                     &compression_level)) {
-        return NULL;
-    }
-
-    if (compression_level < 1 || compression_level > 12) {
-        PyBuffer_Release(&data);
-        PyErr_SetString(PyExc_ValueError, "compresslevel must be between 1 and 12.");
-        return NULL;
-    }
-
-    struct libdeflate_compressor *compressor =
-        libdeflate_alloc_compressor(compression_level);
-    size_t bound = libdeflate_zlib_compress_bound(compressor, data.len);
-
-    PyObject *bytes = PyBytes_FromStringAndSize(NULL, bound);
-    if (bytes == NULL) {
-        libdeflate_free_compressor(compressor);
-        PyBuffer_Release(&data);
-        return PyErr_NoMemory();
-    }
-
-    size_t compressed_size = libdeflate_zlib_compress(compressor, data.buf, data.len,
-                                                      PyBytes_AsString(bytes), bound);
-    libdeflate_free_compressor(compressor);
-    PyBuffer_Release(&data);
-
-    if (compressed_size == 0) {
-        Py_XDECREF(bytes);
-        PyErr_SetString(DeflateError, "Compression failed.");
-        return NULL;
-    }
-
-    _PyBytes_Resize(&bytes, compressed_size);
-
-    return bytes;
-}
-
-static PyObject *deflate_zlib_decompress(PyObject *self, PyObject *args,
-                                         PyObject *kwargs) {
-    static char *keywords[] = {"data", "originalsize", NULL};
-    Py_buffer data;
-    unsigned int size = 0;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*I", keywords, &data, &size)) {
-        return NULL;
-    }
-
-    PyObject *output = PyBytes_FromStringAndSize(NULL, size);
-    if (output == NULL) {
-        PyBuffer_Release(&data);
-        return PyErr_NoMemory();
-    }
-
-    if (Py_REFCNT(output) != 1) {
-        // Immortal object (b"" for instance)
-        return output;
-    }
-
-    size_t decompressed_size;
-    struct libdeflate_decompressor *decompressor = libdeflate_alloc_decompressor();
-    enum libdeflate_result result =
-        libdeflate_zlib_decompress(decompressor, data.buf, data.len,
-                                   PyBytes_AsString(output), size, &decompressed_size);
-    libdeflate_free_decompressor(decompressor);
-
-    // Resize the bytes object to the decompressed size and release the input buffer.
-    _PyBytes_Resize(&output, decompressed_size);
-    PyBuffer_Release(&data);
-
-    if (result != LIBDEFLATE_SUCCESS) {
-        Py_XDECREF(output);
-        PyErr_SetString(DeflateError, "Decompression failed.");
-        return NULL;
-    }
-
-    return output;
 }
 
 static PyMethodDef deflate_methods[] = {
@@ -342,7 +273,7 @@ PyMODINIT_FUNC PyInit_deflate(void) {
     PyModule_AddStringConstant(module, "__version__", MODULE_VERSION);
 
     DeflateError = PyErr_NewException("deflate.DeflateError", NULL, NULL);
-    Py_INCREF(DeflateError);
+    Py_IncRef(DeflateError);
     PyModule_AddObject(module, "DeflateError", DeflateError);
 
     return module;

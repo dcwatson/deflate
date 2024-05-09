@@ -27,11 +27,7 @@ platformdirs==4.2.1
 pluggy==1.5.0
     # via pytest
 pre-commit==3.5.0
-py-cpuinfo==9.0.0
-    # via pytest-benchmark
 pytest==8.2.0
-    # via pytest-benchmark
-pytest-benchmark==4.0.0
 pyyaml==6.0.1
     # via pre-commit
 setuptools==69.5.1
