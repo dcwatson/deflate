@@ -37,13 +37,13 @@ Homepage = "https://github.com/dcwatson/deflate"
 managed = true
 dev-dependencies = [
     "pytest>=7",
-    "pytest-benchmark",
     "pre-commit~=3.5.0",
 ]
 
 [tool.scikit-build]
 minimum-version = "0.9"
-wheel.py-api = "cp311"
+# One day...
+# wheel.py-api = "cp311"
 
 [tool.scikit-build.metadata.version]
 provider = "scikit_build_core.metadata.regex"

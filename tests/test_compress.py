@@ -1,5 +1,6 @@
 # test compress / decompress functionality
 
+import array
 import gzip
 import os
 import zlib
@@ -17,7 +18,9 @@ import deflate
         b"\0" * 23,
         b"foobar",
         b"foobar" * 42,
-        os.urandom(50),
+        os.urandom(500),
+        bytearray(b"hello world") * 100,
+        memoryview(b"hello world" * 100),
     ],
 )
 def test_roundtrip(data):
@@ -33,6 +36,14 @@ def test_roundtrip(data):
     assert deflate.deflate_decompress(deflate.deflate_compress(data), len(data)) == data
 
 
+def test_array():
+    """test roundtripping compressed array.array values"""
+    a = array.array("d", [-42.0, 1.0, 2.0, 3.14, float("inf"), float("-inf")])
+    c = deflate.gzip_compress(a)
+    b = array.array("d", deflate.gzip_decompress(c))
+    assert a == b
+
+
 @pytest.mark.parametrize("compresslevel", range(1, 12 + 1))
 def test_shorter(compresslevel):
     """tests whether compressed data is actually shorter than original data and
@@ -40,7 +51,6 @@ def test_shorter(compresslevel):
     data = b"foobar" * 123
     len_original = len(data)
     len_compressed = len(deflate.gzip_compress(data, compresslevel))
-    print(compresslevel, len_original, len_compressed)
     assert len_compressed < len_original
 
 
@@ -65,3 +75,14 @@ def test_invalid_decompression(compressed):
     """test whether giving invalid data to decompress raises ValueError"""
     with pytest.raises(ValueError):
         deflate.gzip_decompress(compressed)
+
+
+def test_decompress_resize():
+    """test that decompressing with overestimated originalsize works, and fails when
+    originalsize is too small"""
+    block = os.urandom(4096)
+    compressed = deflate.gzip_compress(block)
+    result = deflate.gzip_decompress(compressed, 5000)
+    assert block == result
+    with pytest.raises(deflate.DeflateError):
+        deflate.gzip_decompress(compressed, 3000)

@@ -1,5 +1,7 @@
 #define PY_SSIZE_T_CLEAN
-#define Py_LIMITED_API 0x030b00f0
+
+// Can't use this until 3.11, when Py_buffer was stabilized
+// #define Py_LIMITED_API 0x030b00f0
 #include <Python.h>
 
 #include "libdeflate.h"
@@ -15,21 +17,9 @@ typedef enum libdeflate_result (*DecompressFunc)(struct libdeflate_decompressor 
                                                  size_t *);
 typedef size_t (*BoundFunc)(struct libdeflate_compressor *, size_t);
 
-/*
- * Given a Py_buffer, compression level, CompressFunc, and BoundFunc, compresses the
- * data into a new PyByteArray, releases the Py_buffer, and sets any error message if
- * necessary.
- */
 static PyObject *compress(Py_buffer *data, int compression_level,
                           CompressFunc compressfunc, BoundFunc boundfunc) {
-    if (PyBuffer_IsContiguous(data, 'C') == 0) {
-        PyBuffer_Release(data);
-        PyErr_SetString(PyExc_ValueError, "Input buffer must be contiguous");
-        return NULL;
-    }
-
     if (compression_level < 1 || compression_level > 12) {
-        PyBuffer_Release(data);
         PyErr_SetString(PyExc_ValueError, "compresslevel must be between 1 and 12");
         return NULL;
     }
@@ -41,14 +31,12 @@ static PyObject *compress(Py_buffer *data, int compression_level,
     PyObject *bytes = PyByteArray_FromStringAndSize(NULL, bound);
     if (bytes == NULL) {
         libdeflate_free_compressor(compressor);
-        PyBuffer_Release(data);
         return PyErr_NoMemory();
     }
 
     size_t compressed_size = (*compressfunc)(compressor, data->buf, data->len,
                                              PyByteArray_AsString(bytes), bound);
     libdeflate_free_compressor(compressor);
-    PyBuffer_Release(data);
 
     if (compressed_size == 0) {
         Py_DecRef(bytes);
@@ -63,28 +51,15 @@ static PyObject *compress(Py_buffer *data, int compression_level,
     return bytes;
 }
 
-/*
- * Given a Py_buffer, the original (plaintext) data size, and a DecompressFunc,
- * decompresses the data into a new PyByteArray, releases the Py_buffer, and sets any
- * error message if necessary.
- */
 static PyObject *decompress(Py_buffer *data, unsigned int originalsize,
                             DecompressFunc decompressfunc) {
     // Nothing in, nothing out.
     if (originalsize == 0) {
-        PyBuffer_Release(data);
         return PyByteArray_FromStringAndSize(NULL, 0);
-    }
-
-    if (PyBuffer_IsContiguous(data, 'C') == 0) {
-        PyBuffer_Release(data);
-        PyErr_SetString(PyExc_ValueError, "Input buffer must be contiguous");
-        return NULL;
     }
 
     PyObject *output = PyByteArray_FromStringAndSize(NULL, originalsize);
     if (output == NULL) {
-        PyBuffer_Release(data);
         return PyErr_NoMemory();
     }
 
@@ -94,7 +69,6 @@ static PyObject *decompress(Py_buffer *data, unsigned int originalsize,
         decompressor, data->buf, data->len, PyByteArray_AsString(output), originalsize,
         &decompressed_size);
     libdeflate_free_decompressor(decompressor);
-    PyBuffer_Release(data);
 
     if (result != LIBDEFLATE_SUCCESS) {
         Py_DecRef(output);
@@ -113,8 +87,7 @@ static PyObject *decompress(Py_buffer *data, unsigned int originalsize,
 
 static int read_gzip_size(Py_buffer *data, unsigned int *outsize) {
     uint8_t *bytes = (uint8_t *)data->buf;
-    if ((PyBuffer_IsContiguous(data, 'C') == 0) || (data->len < 6) ||
-        (bytes[0] != 0x1F || bytes[1] != 0x8B)) {
+    if ((data->len < 6) || (bytes[0] != 0x1F || bytes[1] != 0x8B)) {
         return -1;
     }
 
@@ -137,8 +110,10 @@ static PyObject *deflate_gzip_compress(PyObject *self, PyObject *args,
         return NULL;
     }
 
-    return compress(&data, compression_level, libdeflate_gzip_compress,
-                    libdeflate_gzip_compress_bound);
+    PyObject *obj = compress(&data, compression_level, libdeflate_gzip_compress,
+                             libdeflate_gzip_compress_bound);
+    PyBuffer_Release(&data);
+    return obj;
 }
 
 static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args,
@@ -160,7 +135,9 @@ static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args,
         }
     }
 
-    return decompress(&data, originalsize, libdeflate_gzip_decompress);
+    PyObject *obj = decompress(&data, originalsize, libdeflate_gzip_decompress);
+    PyBuffer_Release(&data);
+    return obj;
 }
 
 /* DEFLATE */
@@ -176,8 +153,10 @@ static PyObject *deflate_deflate_compress(PyObject *self, PyObject *args,
         return NULL;
     }
 
-    return compress(&data, compression_level, libdeflate_deflate_compress,
-                    libdeflate_deflate_compress_bound);
+    PyObject *obj = compress(&data, compression_level, libdeflate_deflate_compress,
+                             libdeflate_deflate_compress_bound);
+    PyBuffer_Release(&data);
+    return obj;
 }
 
 static PyObject *deflate_deflate_decompress(PyObject *self, PyObject *args,
@@ -191,7 +170,9 @@ static PyObject *deflate_deflate_decompress(PyObject *self, PyObject *args,
         return NULL;
     }
 
-    return decompress(&data, originalsize, libdeflate_deflate_decompress);
+    PyObject *obj = decompress(&data, originalsize, libdeflate_deflate_decompress);
+    PyBuffer_Release(&data);
+    return obj;
 }
 
 /* ZLIB */
@@ -207,8 +188,10 @@ static PyObject *deflate_zlib_compress(PyObject *self, PyObject *args,
         return NULL;
     }
 
-    return compress(&data, compression_level, libdeflate_zlib_compress,
-                    libdeflate_zlib_compress_bound);
+    PyObject *obj = compress(&data, compression_level, libdeflate_zlib_compress,
+                             libdeflate_zlib_compress_bound);
+    PyBuffer_Release(&data);
+    return obj;
 }
 
 static PyObject *deflate_zlib_decompress(PyObject *self, PyObject *args,
@@ -222,7 +205,9 @@ static PyObject *deflate_zlib_decompress(PyObject *self, PyObject *args,
         return NULL;
     }
 
-    return decompress(&data, originalsize, libdeflate_zlib_decompress);
+    PyObject *obj = decompress(&data, originalsize, libdeflate_zlib_decompress);
+    PyBuffer_Release(&data);
+    return obj;
 }
 
 /* CRC-32/Adler-32 */
