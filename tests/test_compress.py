@@ -62,6 +62,6 @@ def test_unsupported_compresslevel(compresslevel):
     ],
 )
 def test_invalid_decompression(compressed):
-    """test whether giving invalid data to decompress raises DeflateError"""
-    with pytest.raises(deflate.DeflateError):
+    """test whether giving invalid data to decompress raises ValueError"""
+    with pytest.raises(ValueError):
         deflate.gzip_decompress(compressed)

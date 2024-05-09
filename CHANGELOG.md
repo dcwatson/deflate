@@ -3,10 +3,10 @@
 * Switched to [scikit-build-core](https://github.com/scikit-build/scikit-build-core) and
   CMake (#42, #43) - huge thanks to @henryiii
 * Use the [stable Python ABI](https://docs.python.org/3/c-api/stable.html)
-* Return [memoryview](https://docs.python.org/3/library/stdtypes.html#memoryview) from
-  compression methods, to avoid copying (slow) or resizing bytes objects (not stable
+* Return [bytearray](https://docs.python.org/3/library/stdtypes.html#bytearray) from
+  compression and decompression methods, to avoid copying (resizing bytes is not stable
   ABI)
-* Decompression methods will error if provided with an incorrect `originalsize`
+* Raise `ValueError` instead of `DeflateError` on invalid gzip data
 
 
 ## 0.6.1
