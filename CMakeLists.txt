@@ -5,6 +5,9 @@ find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 
 python_add_library(deflate_ext MODULE src/deflate.c)
 set_property(TARGET deflate_ext PROPERTY OUTPUT_NAME deflate)
+if(Python_VERSION VERSION_GREATER_EQUAL 3.11)
+  target_compile_definitions(deflate_ext PRIVATE Py_LIMITED_API=0x030b00f0)
+endif()
 
 if(DEFINED ENV{LIBDEFLATE_PREFIX})
     message(STATUS "Finding libdeflate in $ENV{LIBDEFLATE_PREFIX}")

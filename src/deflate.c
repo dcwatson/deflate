@@ -1,7 +1,6 @@
 #define PY_SSIZE_T_CLEAN
+// If Py_LIMITED_API defined (to 0x030b00f0), will use Stable ABI
 
-// Can't use this until 3.11, when Py_buffer was stabilized
-// #define Py_LIMITED_API 0x030b00f0
 #include <Python.h>
 
 #include "libdeflate.h"
