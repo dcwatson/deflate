@@ -3,7 +3,7 @@ project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module ${SKBUILD_SABI_COMPONENT})
 
-if(Python_VERSION VERSION_GREATER_EQUAL 3.11)
+if(Python_VERSION VERSION_GREATER_EQUAL 3.11 AND Python_INTERPRETER_ID STREQUAL Python)
     python_add_library(_deflate MODULE USE_SABI 3.11 src/_deflate.c)
 else()
     python_add_library(_deflate MODULE WITH_SOABI src/_deflate.c)

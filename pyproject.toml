@@ -60,6 +60,5 @@ extend-select = ["B", "I"]
 isort.known-first-party = ["deflate"]
 
 [tool.cibuildwheel]
-skip = ["pp*"]  # PyPy not supported
 test-extras = ["test"]
 test-command = "pytest {package}/tests"
