@@ -48,19 +48,24 @@ adler32 = deflate.adler32(b"hello universe!", adler32)  # continued
 
 # Installation
 
-`pip install deflate`
+```bash
+pip install deflate
+```
 
 By default, `deflate` will compile and statically link the bundled `libdeflate` when you
-build from source. To link to a system-installed `libdeflate`, set the
-`LIBDEFLATE_PREFIX` environment variable:
+build from source (or use the pre-compiled wheels). To link to a system-installed `libdeflate`, set the
+`LIBDEFLATE_PREFIX` environment variable and build from source:
 
 ```
-LIBDEFLATE_PREFIX=/opt/homebrew/Cellar/libdeflate/1.20 python -m build
+LIBDEFLATE_PREFIX=/opt/homebrew/Cellar/libdeflate/1.20 pip install deflate --no-binary=deflate
 ```
+
+Be warned: you can't use this wheel on a system without the referenced libdeflate.
 
 # Testing
 
-```
+```bash
 pip install -r requirements-dev.lock
 python -m pytest
 ```
+
