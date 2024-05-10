@@ -1,9 +1,9 @@
-
 ## 0.8.0 (unreleased)
 
 * Use only the [limited Python API](https://docs.python.org/3/c-api/stable.html)
     * Use the Stable ABI for Python 3.11+
 * Return [bytearray](https://docs.python.org/3/library/stdtypes.html#bytearray) from compression and decompression methods to avoid copying (resizing bytes is private API)
+* Added typing stubs (and a shell python package to hold them and the renamed `_deflate` compiled extension) (#49)
 
 
 ## 0.7.0 (2024-05-09)
