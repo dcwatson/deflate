@@ -258,11 +258,11 @@ static PyMethodDef deflate_methods[] = {
      "adler32 algorithm from libdeflate"},
     {NULL, NULL, 0, NULL}};
 
-static struct PyModuleDef deflate_module = {PyModuleDef_HEAD_INIT, "deflate",
+static struct PyModuleDef deflate_module = {PyModuleDef_HEAD_INIT, "_deflate",
                                             "Python wrapper module for libdeflate.", -1,
                                             deflate_methods};
 
-PyMODINIT_FUNC PyInit_deflate(void) {
+PyMODINIT_FUNC PyInit__deflate(void) {
     Py_Initialize();
 
     PyObject *module = PyModule_Create(&deflate_module);
