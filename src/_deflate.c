@@ -263,8 +263,6 @@ static struct PyModuleDef deflate_module = {PyModuleDef_HEAD_INIT, "_deflate",
                                             deflate_methods};
 
 PyMODINIT_FUNC PyInit__deflate(void) {
-    Py_Initialize();
-
     PyObject *module = PyModule_Create(&deflate_module);
     if (module == NULL)
         return NULL;
