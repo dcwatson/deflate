@@ -34,8 +34,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
       - name: Install
-        run: |
-          pip install uv
-          uv pip install --system -r requirements-dev.lock
+        run: pip install -r requirements-dev.lock
       - name: Run Tests
         run: pytest
