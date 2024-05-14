@@ -33,7 +33,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
+      - name: Setup uv
+        uses: yezz123/setup-uv@v4
       - name: Install
-        run: pip install -r requirements-dev.lock
+        run: uv pip install --system -r requirements-dev.lock
       - name: Run Tests
         run: pytest
