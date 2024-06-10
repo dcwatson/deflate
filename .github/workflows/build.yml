@@ -5,6 +5,9 @@ on:
     tags:
       - '*'
   workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/build.yml
 
 jobs:
   build_wheels:
@@ -25,7 +28,7 @@ jobs:
         uses: yezz123/setup-uv@v4
 
       - name: Build wheels
-        uses: henryiii/cibuildwheel@v2.19
+        uses: pypa/cibuildwheel@v2.19
 
       - uses: actions/upload-artifact@v4
         with:
