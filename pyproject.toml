@@ -63,3 +63,4 @@ isort.known-first-party = ["deflate"]
 [tool.cibuildwheel]
 test-extras = ["test"]
 test-command = "pytest {package}/tests"
+build-frontend = "build[uv]"
