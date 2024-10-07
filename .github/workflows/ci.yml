@@ -10,19 +10,24 @@ on:
     branches:
       - main
 
+env:
+  UV_SYSTEM_PYTHON: 1
+  UV_PYTHON_DOWNLOADS: never
+  UV_PYTHON_PREFERENCE: only-system
+
 jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: chartboost/ruff-action@v1
+      - uses: astral-sh/ruff-action@v1
 
   test:
     needs: checks
     strategy:
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "pypy3.8", "pypy3.10"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "pypy3.10"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -34,8 +39,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
       - name: Setup uv
-        uses: yezz123/setup-uv@v4
+        uses: astral-sh/setup-uv@v3
       - name: Install
-        run: uv pip install --system -r requirements-dev.lock
+        run: uv sync --all-extras
       - name: Run Tests
-        run: pytest
+        run: uv run pytest
