@@ -5,7 +5,7 @@
 * Return [bytearray](https://docs.python.org/3/library/stdtypes.html#bytearray) from compression and decompression methods to avoid copying (resizing bytes is private API)
 * Added typing stubs (and a shell python package to hold them and the renamed `_deflate` compiled extension) (#49)
 * Added support and compiled wheels for PyPy.
-* Updated bundled libdeflate to v1.22
+* Updated bundled libdeflate to v1.23
 * Drop support for Python 3.8
 
 
