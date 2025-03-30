@@ -1,4 +1,4 @@
-## 0.8.0 (unreleased)
+## 0.8.0 (2025-03-29)
 
 * Use only the [limited Python API](https://docs.python.org/3/c-api/stable.html)
     * Use the Stable ABI for Python 3.11+
