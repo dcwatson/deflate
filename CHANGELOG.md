@@ -1,3 +1,9 @@
+## 0.8.1 (2025-07-??)
+
+* Updated bundled libdeflate to v1.24
+* Allow `compresslevel=0` (since `libdeflate` does)
+
+
 ## 0.8.0 (2025-03-29)
 
 * Use only the [limited Python API](https://docs.python.org/3/c-api/stable.html)

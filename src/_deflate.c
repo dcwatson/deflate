@@ -5,7 +5,7 @@
 
 #include "libdeflate.h"
 
-#define MODULE_VERSION "0.8.0"
+#define MODULE_VERSION "0.8.1"
 
 static PyObject *DeflateError;
 
@@ -18,8 +18,8 @@ typedef size_t (*BoundFunc)(struct libdeflate_compressor *, size_t);
 
 static PyObject *compress(Py_buffer *data, int compression_level,
                           CompressFunc compressfunc, BoundFunc boundfunc) {
-    if (compression_level < 1 || compression_level > 12) {
-        PyErr_SetString(PyExc_ValueError, "compresslevel must be between 1 and 12");
+    if (compression_level < 0 || compression_level > 12) {
+        PyErr_SetString(PyExc_ValueError, "compresslevel must be between 0 and 12");
         return NULL;
     }
 
