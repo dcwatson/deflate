@@ -1,4 +1,4 @@
-## 0.8.1 (2025-07-??)
+## 0.8.1 (2025-07-18)
 
 * Updated bundled libdeflate to v1.24
 * Allow `compresslevel=0` (since `libdeflate` does)
