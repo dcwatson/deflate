@@ -1,3 +1,9 @@
+## 0.9.0 (in development)
+
+* Build and test on Python 3.14
+* Drop support for Python 3.9
+
+
 ## 0.8.1 (2025-07-18)
 
 * Updated bundled libdeflate to v1.24
