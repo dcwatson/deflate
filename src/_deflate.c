@@ -33,8 +33,11 @@ static PyObject *compress(Py_buffer *data, int compression_level,
         return PyErr_NoMemory();
     }
 
-    size_t compressed_size = (*compressfunc)(compressor, data->buf, data->len,
-                                             PyByteArray_AsString(bytes), bound);
+    char *outbuf = PyByteArray_AsString(bytes);
+    size_t compressed_size;
+    Py_BEGIN_ALLOW_THREADS;
+    compressed_size = (*compressfunc)(compressor, data->buf, data->len, outbuf, bound);
+    Py_END_ALLOW_THREADS;
     libdeflate_free_compressor(compressor);
 
     if (compressed_size == 0) {
@@ -62,11 +65,14 @@ static PyObject *decompress(Py_buffer *data, unsigned int originalsize,
         return PyErr_NoMemory();
     }
 
+    char *outbuf = PyByteArray_AsString(output);
     size_t decompressed_size;
     struct libdeflate_decompressor *decompressor = libdeflate_alloc_decompressor();
-    enum libdeflate_result result = (*decompressfunc)(
-        decompressor, data->buf, data->len, PyByteArray_AsString(output), originalsize,
-        &decompressed_size);
+    enum libdeflate_result result;
+    Py_BEGIN_ALLOW_THREADS;
+    result = (*decompressfunc)(decompressor, data->buf, data->len, outbuf, originalsize,
+                               &decompressed_size);
+    Py_END_ALLOW_THREADS;
     libdeflate_free_decompressor(decompressor);
 
     if (result != LIBDEFLATE_SUCCESS) {
