@@ -273,6 +273,10 @@ PyMODINIT_FUNC PyInit__deflate(void) {
     if (module == NULL)
         return NULL;
 
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
+#endif
+
     PyModule_AddStringConstant(module, "__version__", MODULE_VERSION);
 
     DeflateError = PyErr_NewException("deflate.DeflateError", NULL, NULL);

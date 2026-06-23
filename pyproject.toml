@@ -7,7 +7,7 @@ name = "deflate"
 dynamic = ["version"]
 description = "Python wrapper for libdeflate."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = []
 authors = [
     { name = "Dan Watson", email = "dcwatson@gmail.com" },
@@ -62,3 +62,4 @@ isort.known-first-party = ["deflate"]
 [tool.cibuildwheel]
 test-extras = ["test"]
 test-command = "pytest {package}/tests"
+build-frontend = "build[uv]"

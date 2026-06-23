@@ -2,6 +2,8 @@
 
 * Build and test on Python 3.14
 * Drop support for Python 3.9
+* Updated bundled libdeflate to v1.25
+* Build for free-threaded Python (3.14 only)
 
 
 ## 0.8.1 (2025-07-18)
