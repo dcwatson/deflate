@@ -89,3 +89,29 @@ def test_decompress_resize():
     assert block == result
     with pytest.raises(deflate.DeflateError):
         deflate.gzip_decompress(compressed, 3000)
+
+
+@pytest.mark.parametrize(
+    "originalsize",
+    [
+        2**32,
+        2**32 + 1,
+        2**32 + 12345,
+    ],
+)
+def test_originalsize_larger_than_4gib_is_not_truncated(originalsize):
+    """test that originalsize values above 4GiB are not interpreted via low 32 bits"""
+    # If originalsize were truncated, gzip with 2**32 would become 0 and raise ValueError
+    # here by trying to parse an invalid gzip footer.
+    if originalsize == 2**32:
+        with pytest.raises((MemoryError, deflate.DeflateError)):
+            deflate.gzip_decompress(b"not a gzip stream", originalsize)
+
+    # If originalsize were truncated, this would become small and fail with
+    # DeflateError. With correct parsing it either succeeds or raises MemoryError.
+    data = b"hello world"
+    compressed = deflate.zlib_compress(data)
+    try:
+        assert deflate.zlib_decompress(compressed, originalsize) == data
+    except MemoryError:
+        pass

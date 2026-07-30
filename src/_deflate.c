@@ -53,7 +53,7 @@ static PyObject *compress(Py_buffer *data, int compression_level,
     return bytes;
 }
 
-static PyObject *decompress(Py_buffer *data, unsigned int originalsize,
+static PyObject *decompress(Py_buffer *data, size_t originalsize,
                             DecompressFunc decompressfunc) {
     // Nothing in, nothing out.
     if (originalsize == 0) {
@@ -90,7 +90,7 @@ static PyObject *decompress(Py_buffer *data, unsigned int originalsize,
 
 /* GZIP */
 
-static int read_gzip_size(Py_buffer *data, unsigned int *outsize) {
+static int read_gzip_size(Py_buffer *data, uint32_t *outsize) {
     uint8_t *bytes = (uint8_t *)data->buf;
     if ((data->len < 6) || (bytes[0] != 0x1F || bytes[1] != 0x8B)) {
         return -1;
@@ -125,22 +125,31 @@ static PyObject *deflate_gzip_decompress(PyObject *self, PyObject *args,
                                          PyObject *kwargs) {
     static char *keywords[] = {"data", "originalsize", NULL};
     Py_buffer data;
-    unsigned int originalsize = 0;
+    Py_ssize_t originalsize = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|I", keywords, &data,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|n", keywords, &data,
                                      &originalsize)) {
         return NULL;
     }
 
-    if (originalsize == 0) {
-        if (read_gzip_size(&data, &originalsize) != 0) {
+    if (originalsize < 0) {
+        PyBuffer_Release(&data);
+        PyErr_SetString(PyExc_ValueError, "originalsize must not be negative");
+        return NULL;
+    }
+
+    size_t size = (size_t)originalsize;
+    if (size == 0) {
+        uint32_t gzip_size;
+        if (read_gzip_size(&data, &gzip_size) != 0) {
             PyBuffer_Release(&data);
             PyErr_SetString(PyExc_ValueError, "Invalid gzip data");
             return NULL;
         }
+        size = (size_t)gzip_size;
     }
 
-    PyObject *obj = decompress(&data, originalsize, libdeflate_gzip_decompress);
+    PyObject *obj = decompress(&data, size, libdeflate_gzip_decompress);
     PyBuffer_Release(&data);
     return obj;
 }
@@ -168,14 +177,20 @@ static PyObject *deflate_deflate_decompress(PyObject *self, PyObject *args,
                                             PyObject *kwargs) {
     static char *keywords[] = {"data", "originalsize", NULL};
     Py_buffer data;
-    unsigned int originalsize = 0;
+    Py_ssize_t originalsize = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*I", keywords, &data,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*n", keywords, &data,
                                      &originalsize)) {
         return NULL;
     }
 
-    PyObject *obj = decompress(&data, originalsize, libdeflate_deflate_decompress);
+    if (originalsize < 0) {
+        PyBuffer_Release(&data);
+        PyErr_SetString(PyExc_ValueError, "originalsize must not be negative");
+        return NULL;
+    }
+
+    PyObject *obj = decompress(&data, (size_t)originalsize, libdeflate_deflate_decompress);
     PyBuffer_Release(&data);
     return obj;
 }
@@ -203,14 +218,20 @@ static PyObject *deflate_zlib_decompress(PyObject *self, PyObject *args,
                                          PyObject *kwargs) {
     static char *keywords[] = {"data", "originalsize", NULL};
     Py_buffer data;
-    unsigned int originalsize = 0;
+    Py_ssize_t originalsize = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*I", keywords, &data,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*n", keywords, &data,
                                      &originalsize)) {
         return NULL;
     }
 
-    PyObject *obj = decompress(&data, originalsize, libdeflate_zlib_decompress);
+    if (originalsize < 0) {
+        PyBuffer_Release(&data);
+        PyErr_SetString(PyExc_ValueError, "originalsize must not be negative");
+        return NULL;
+    }
+
+    PyObject *obj = decompress(&data, (size_t)originalsize, libdeflate_zlib_decompress);
     PyBuffer_Release(&data);
     return obj;
 }
