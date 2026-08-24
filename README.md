@@ -65,7 +65,6 @@ Be warned: you can't use this wheel on a system without the referenced libdeflat
 # Testing
 
 ```bash
-pip install -r requirements-dev.lock
-python -m pytest
+uv sync
+uv run pytest
 ```
-
