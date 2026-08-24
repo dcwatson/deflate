@@ -18,8 +18,9 @@ typedef size_t (*BoundFunc)(struct libdeflate_compressor *, size_t);
 
 static PyObject *compress(Py_buffer *data, int compression_level,
                           CompressFunc compressfunc, BoundFunc boundfunc) {
-    if (compression_level < 0 || compression_level > 12) {
-        PyErr_SetString(PyExc_ValueError, "compresslevel must be between 0 and 12");
+    if (compression_level < -1 || compression_level > 12) {
+        PyErr_SetString(PyExc_ValueError,
+                        "compresslevel must be between -1 (default) and 12");
         return NULL;
     }
 
@@ -108,7 +109,7 @@ static PyObject *deflate_gzip_compress(PyObject *self, PyObject *args,
                                        PyObject *kwargs) {
     static char *keywords[] = {"data", "compresslevel", NULL};
     Py_buffer data;
-    int compression_level = 6;
+    int compression_level = -1;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|i", keywords, &data,
                                      &compression_level)) {
@@ -151,7 +152,7 @@ static PyObject *deflate_deflate_compress(PyObject *self, PyObject *args,
                                           PyObject *kwargs) {
     static char *keywords[] = {"data", "compresslevel", NULL};
     Py_buffer data;
-    int compression_level = 6;
+    int compression_level = -1;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|i", keywords, &data,
                                      &compression_level)) {
@@ -186,7 +187,7 @@ static PyObject *deflate_zlib_compress(PyObject *self, PyObject *args,
                                        PyObject *kwargs) {
     static char *keywords[] = {"data", "compresslevel", NULL};
     Py_buffer data;
-    int compression_level = 6;
+    int compression_level = -1;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y*|i", keywords, &data,
                                      &compression_level)) {

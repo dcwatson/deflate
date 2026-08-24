@@ -44,20 +44,21 @@ def test_array():
     assert a == b
 
 
-@pytest.mark.parametrize("compresslevel", range(0, 12 + 1))
+@pytest.mark.parametrize("compresslevel", range(-1, 12 + 1))
 def test_shorter(compresslevel):
     """tests whether compressed data is actually shorter than original data and
     also uses all supported compresslevels"""
-    data = b"foobar" * 123
+    data = b"foobar" * 1000
     len_original = len(data)
     len_compressed = len(deflate.gzip_compress(data, compresslevel))
-    if compresslevel > 0:
+    if compresslevel != 0:
         assert len_compressed < len_original
     else:
+        # 0 (no compression) will be larger to include gzip data
         assert len_compressed > len_original
 
 
-@pytest.mark.parametrize("compresslevel", [-1, 13, 256, 65536])
+@pytest.mark.parametrize("compresslevel", [-2, 13, 256, 65536])
 def test_unsupported_compresslevel(compresslevel):
     """test if compresslevels outside of supported range raise ValueError"""
     with pytest.raises(ValueError):

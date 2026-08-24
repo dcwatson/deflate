@@ -4,6 +4,7 @@
 * Drop support for Python 3.9
 * Updated bundled libdeflate to v1.26
 * Build for free-threaded Python (3.14 only)
+* Use -1 for default `compresslevel` to indicate the library default (currently 6)
 
 
 ## 0.8.1 (2025-07-18)

@@ -9,6 +9,7 @@ Currently, it handles:
 
 ```python
 import deflate
+
 level = 6  # The default; may be 1-12 for libdeflate.
 compressed = deflate.gzip_compress(b"hello world!" * 1000, level)
 original = deflate.gzip_decompress(compressed)
@@ -20,6 +21,7 @@ The original size of the decompressed data needs to be kept through additional l
 
 ```python
 import deflate
+
 level = 6  # The default; may be 1-12 for libdeflate.
 data = b"hello world!" * 1000
 # DEFLATE
@@ -34,6 +36,7 @@ original = deflate.zlib_decompress(compressed, len(data))
 
 ```python
 import deflate
+
 crc32 = deflate.crc32(b"hello world! ")  # initial
 crc32 = deflate.crc32(b"hello universe!", crc32)  # continued
 ```
@@ -42,6 +45,7 @@ crc32 = deflate.crc32(b"hello universe!", crc32)  # continued
 
 ```python
 import deflate
+
 adler32 = deflate.adler32(b"hello world! ")  # initial
 adler32 = deflate.adler32(b"hello universe!", adler32)  # continued
 ```
